@@ -1,4 +1,4 @@
-Here's the complete index.html with Black Veil Brides, shuffled emojis, and the "not in order" note. Replace your whole file with this.
+Here's the full file with testing buttons added. They only appear when you open the URL with ?debug=1, so your girlfriend never sees them.
 
 ```html
 <!DOCTYPE html>
@@ -66,6 +66,66 @@ Here's the complete index.html with Black Veil Brides, shuffled emojis, and the 
       justify-content: center;
     }
     #recenterBtn:active { transform: scale(0.94); }
+
+    /* ---------- DEBUG PANEL ---------- */
+    #debugPanel {
+      position: absolute;
+      top: 70px;
+      left: 12px;
+      right: 12px;
+      z-index: 2500;
+      background: rgba(0,0,0,0.85);
+      border-radius: 16px;
+      padding: 12px;
+      color: white;
+      font-size: 12px;
+      display: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+    #debugPanel.visible { display: block; }
+    #debugPanel h3 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      text-align: center;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.8;
+    }
+    .debugGrid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .debugGrid button {
+      padding: 10px 4px;
+      font-size: 13px;
+      font-weight: 700;
+      background: #444;
+      color: white;
+      border-radius: 10px;
+      border: none;
+      width: 100%;
+    }
+    .debugGrid button.active { background: #e91e63; }
+    .debugRow {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+    }
+    .debugRow button {
+      padding: 10px 6px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #333;
+      color: white;
+      border-radius: 10px;
+      border: none;
+      width: 100%;
+    }
+    .debugRow button.danger { background: #8b1c1c; }
+    .debugRow button.good { background: #2e7d32; }
+
     .overlay {
       position: absolute;
       inset: 0;
@@ -155,6 +215,22 @@ Here's the complete index.html with Black Veil Brides, shuffled emojis, and the 
   <div id="status">Ready to start? 🐾</div>
   <button id="recenterBtn" title="Recenter">🐾</button>
 
+  <!-- DEBUG PANEL (only visible with ?debug=1) -->
+  <div id="debugPanel">
+    <h3>🐾 Debug Panel</h3>
+    <div class="debugGrid" id="debugStopGrid"></div>
+    <div class="debugRow">
+      <button id="dbgSolve" class="good">✅ Solve</button>
+      <button id="dbgSkip" class="good">⏭ Skip</button>
+      <button id="dbgEnd" class="good">🏁 End</button>
+    </div>
+    <div class="debugRow" style="margin-top:6px;">
+      <button id="dbgHide">👁 Hide</button>
+      <button id="dbgShow">👁 Show</button>
+      <button id="dbgReset" class="danger">🔄 Reset</button>
+    </div>
+  </div>
+
   <!-- Start screen -->
   <div id="startScreen" class="overlay">
     <div class="card">
@@ -239,9 +315,6 @@ Here's the complete index.html with Black Veil Brides, shuffled emojis, and the 
   <script>
     // ============================================================
     // 1. CUSTOMIZE YOUR STOPS HERE
-    //    `emoji` = the emoji revealed when she solves this stop.
-    //    These are intentionally OUT OF ORDER. Correct order is:
-    //    ⚫ 👰 👰 👰 🖤  →  Black Veil Brides
     // ============================================================
     const stops = [
       {
@@ -303,7 +376,6 @@ Here's the complete index.html with Black Veil Brides, shuffled emojis, and the 
 
     // ============================================================
     // 2. FINAL PUZZLE CONFIG
-    //    Correct answer: Black Veil Brides (⚫ 👰 👰 👰 🖤)
     // ============================================================
     const finalPuzzle = {
       answers: [
@@ -363,6 +435,26 @@ Here's the complete index.html with Black Veil Brides, shuffled emojis, and the 
       bar.textContent = collected.join(' ');
     }
 
+    function updateDebugStopGrid() {
+      const grid = document.getElementById('debugStopGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      stops.forEach((s, i) => {
+        const b = document.createElement('button');
+        b.textContent = `${i + 1}`;
+        if (i === currentStopIndex && !isFinal) b.classList.add('active');
+        b.onclick = () => debugJumpToStop(i);
+        grid.appendChild(b);
+      });
+      if (isFinal) {
+        const b = document.createElement('button');
+        b.textContent = '🏁';
+        b.classList.add('active');
+        b.onclick = () => { closeAllModals(); showFinalGuess(); };
+        grid.appendChild(b);
+      }
+    }
+
     // ============================================================
     // 4. MAP + GEOLOCATION
     // ============================================================
@@ -391,6 +483,7 @@ Here's the complete index.html with Black Veil Brides, shuffled emojis, and the 
       }
 
       updateEmojiBar();
+      updateDebugStopGrid();
 
       watchId = navigator.geolocation.watchPosition(onPosition, onError, {
         enableHighAccuracy: true,
@@ -483,6 +576,13 @@ Here's the complete index.html with Black Veil Brides, shuffled emojis, and the 
     // ============================================================
     // 5. UI FLOW
     // ============================================================
+    function closeAllModals() {
+      ['startScreen','riddleModal','challengeModal','emojiModal',
+       'finalGuessModal','finalModal','gpsErrorModal'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+    }
+
     function showStop(index) {
       hasFittedForStop = false;
       const stop = stops[index];
@@ -494,6 +594,7 @@ Here's the complete index.html with Black Veil Brides, shuffled emojis, and the 
       }).addTo(map);
       map.setView(stop.coords, 16);
       hasFittedForStop = true;
+      updateDebugStopGrid();
     }
 
     function recenter() {
@@ -575,6 +676,7 @@ Here's the complete index.html with Black Veil Brides, shuffled emojis, and the 
       document.getElementById('finalAnswerError').textContent = '';
       document.getElementById('finalGuessModal').classList.remove('hidden');
       document.getElementById('emojiBar').style.display = 'none';
+      updateDebugStopGrid();
     }
 
     function submitFinalGuess() {
@@ -607,7 +709,80 @@ Here's the complete index.html with Black Veil Brides, shuffled emojis, and the 
     }
 
     // ============================================================
-    // 6. INIT
+    // 6. DEBUG HELPERS (only active with ?debug=1)
+    // ============================================================
+    function debugJumpToStop(index) {
+      closeAllModals();
+      currentStopIndex = index;
+      isFinal = false;
+      stops.forEach((s, i) => { s.revealed = (i < index); });
+      saveProgress();
+      updateEmojiBar();
+      document.getElementById('recenterBtn').style.display = 'flex';
+      // Simulate arriving: directly show the riddle for this stop
+      showStop(index);
+      stops[index].revealed = true;
+      showRiddle(stops[index]);
+    }
+
+    function debugSolveCurrent() {
+      // Instantly complete current stop and advance
+      closeAllModals();
+      if (isFinal || currentStopIndex >= stops.length) return;
+      const finished = stops[currentStopIndex];
+      currentStopIndex++;
+      saveProgress();
+      updateEmojiBar();
+      showEmojiReveal(finished);
+    }
+
+    function debugSkip() {
+      // Jump straight to next stop, no emoji reveal
+      closeAllModals();
+      if (isFinal || currentStopIndex >= stops.length) return;
+      currentStopIndex++;
+      saveProgress();
+      updateEmojiBar();
+      if (currentStopIndex >= stops.length) {
+        isFinal = true;
+        saveProgress();
+        showFinalGuess();
+      } else {
+        showStop(currentStopIndex);
+      }
+    }
+
+    function debugEnd() {
+      // Jump straight to the final guess with all emojis collected
+      closeAllModals();
+      currentStopIndex = stops.length;
+      isFinal = true;
+      saveProgress();
+      updateEmojiBar();
+      showFinalGuess();
+    }
+
+    function debugReset() {
+      clearProgress();
+      location.reload();
+    }
+
+    function initDebugPanel() {
+      if (!DEBUG) return;
+      document.getElementById('debugPanel').classList.add('visible');
+      document.getElementById('dbgSolve').onclick = debugSolveCurrent;
+      document.getElementById('dbgSkip').onclick = debugSkip;
+      document.getElementById('dbgEnd').onclick = debugEnd;
+      document.getElementById('dbgReset').onclick = debugReset;
+      document.getElementById('dbgHide').onclick = () =>
+        document.getElementById('debugPanel').style.display = 'none';
+      document.getElementById('dbgShow').onclick = () =>
+        document.getElementById('debugPanel').style.display = 'block';
+      updateDebugStopGrid();
+    }
+
+    // ============================================================
+    // 7. INIT
     // ============================================================
     window.addEventListener('load', () => {
       initMap();
@@ -644,58 +819,49 @@ Here's the complete index.html with Black Veil Brides, shuffled emojis, and the 
       });
       document.getElementById('recenterBtn').addEventListener('click', recenter);
 
-      // Debug mode
-      if (DEBUG) {
-        const btn = document.createElement('button');
-        btn.textContent = 'Debug: reveal current';
-        btn.style.cssText = 'position:absolute;bottom:140px;left:20px;z-index:2000;width:auto;padding:10px 16px;font-size:14px;';
-        btn.onclick = () => {
-          const stop = stops[currentStopIndex];
-          if (stop) { stop.revealed = true; showRiddle(stop); }
-        };
-        document.body.appendChild(btn);
-
-        const resetBtn = document.createElement('button');
-        resetBtn.textContent = 'Debug: reset';
-        resetBtn.style.cssText = 'position:absolute;bottom:140px;right:20px;z-index:2000;width:auto;padding:10px 16px;font-size:14px;background:#555;';
-        resetBtn.onclick = () => { clearProgress(); location.reload(); };
-        document.body.appendChild(resetBtn);
-      }
+      initDebugPanel();
     });
   </script>
 </body>
 </html>
 ```
 
-🐾 What she sees, step by step
+🐾 How to use the debug panel
 
-Stop Location Emoji earned
-1 Blue Church 👰
-2 Čumil ⚫
-3 Hviezdoslavovo 🖤
-4 UFO Bridge 👰
-5 Castle 👰
+Open the URL with ?debug=1:
 
-Final screen shows: 👰 ⚫ 🖤 👰 👰 with the note "they're NOT in order."
+```
+https://granko15.github.io/TreasureHunt/?debug=1
+```
 
-She needs to mentally rearrange to ⚫ 👰 👰 👰 🖤 → Black Veil Brides.
+A black panel appears at the top of the map with these buttons:
 
-✅ Test it first
+Button What it does
+1 2 3 4 5 Jump directly to that stop and trigger its riddle — simulates arriving there
+🏁 (appears after all 5) Jump to the final guess
+✅ Solve Instantly solve the current stop and show the emoji reveal
+⏭ Skip Skip to the next stop without the emoji reveal
+🏁 End Jump straight to the final guess with all 5 emojis collected
+👁 Hide Hide the debug panel
+👁 Show Show it again
+🔄 Reset Wipe progress and reload
 
-1. Commit this file to GitHub.
-2. Open https://granko15.github.io/TreasureHunt/?debug=1 on your phone.
-3. Tap Start the hunt → allow location.
-4. Tap Debug: reveal current → type the riddle answer (see list below) → tap Done → tap Continue.
-5. Repeat 5 times, then type black veil brides on the final screen.
+🧪 Fast test flow
 
-Answers you'll need for the debug walkthrough:
+1. Open ?debug=1 → tap Start the hunt
+2. Tap 1 → the Blue Church riddle appears → type blue church → tap Done → tap Continue → emoji 👰 pops up
+3. Tap 2 → Čumil riddle → type cumil → ... etc.
+4. Or just hit 🏁 End to see the final screen instantly
+5. Type black veil brides → success message
 
-· blue church
-· cumil
-· square
-· ufo
-· castle
+✅ When you're done testing
 
-Also make sure she doesn't have old progress saved — the key changed to catHunt_progress_v3, so any previous test data won't carry over. If she already tested, the old key just sits there unused.
+Just share the URL without ?debug=1:
 
-Want me to add a small "hint" on the final screen that nudges her if she's stuck (e.g., after 2 wrong guesses, reveal "start with the black circle")?
+```
+https://granko15.github.io/TreasureHunt
+```
+
+The debug panel won't exist for her. No need to remove the code — it's gated behind the ?debug=1 check.
+
+One tip: after testing, tap 🔄 Reset in the debug panel before giving it to her, so she starts fresh with no leftover progress.
