@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Bratislava Treasure Hunt</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #111;
+    }
+    #map {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+    }
+    #status {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 10px 20px;
+      border-radius: 999px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      z-index: 500;
+      font-weight: 600;
+      font-size: 15px;
+      white-space: nowrap;
+    }
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+    .overlay.hidden { display: none; }
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 28px 24px;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      text-align: center;
+    }
+    h1 { font-size: 24px; margin: 0 0 12px; }
+    h2 { font-size: 20px; margin: 0 0 12px; }
+    p { line-height: 1.6; margin: 0 0 16px; color: #333; }
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #ddd;
+      border-radius: 14px;
+      font-size: 16px;
+      margin-bottom: 12px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input:focus { border-color: #e91e63; }
+    button {
+      background: #e91e63;
+      color: white;
+      border: none;
+      border-radius: 999px;
+      padding: 14px 28px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      transition: transform 0.1s, background 0.2s;
+    }
+    button:active { transform: scale(0.97); }
+    button.secondary {
+      background: #9e9e9e;
+      margin-top: 8px;
+    }
+    .error {
+      color: #d32f2f;
+      font-size: 14px;
+      margin-bottom: 12px;
+      min-height: 20px;
+    }
+    .emoji { font-size: 48px; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="status">Ready to start?</div>
+
+  <!-- Start screen -->
+  <div id="startScreen" class="overlay">
+    <div class="card">
+      <div class="emoji">💖</div>
+      <h1>Bratislava Treasure Hunt</h1>
+      <p>For the most beautiful girl in the world. Follow the clues, solve the riddles, and find your treasure.</p>
+      <button id="startBtn">Start the hunt</button>
+    </div>
+  </div>
+
+  <!-- Riddle modal -->
+  <div id="riddleModal" class="overlay hidden">
+    <div class="card">
+      <h2>Riddle</h2>
+      <p id="riddleText"></p>
+      <input id="answerInput" type="text" placeholder="Your answer..." autocomplete="off" />
+      <div id="answerError" class="error"></div>
+      <button id="submitAnswerBtn">Submit</button>
+      <button id="hintBtn" class="secondary">Hint</button>
+    </div>
+  </div>
+
+  <!-- Challenge modal -->
+  <div id="challengeModal" class="overlay hidden">
+    <div class="card">
+      <h2>Challenge</h2>
+      <p id="challengeText"></p>
+      <button id="completeChallengeBtn">Challenge complete!</button>
+    </div>
+  </div>
+
+  <!-- Final modal -->
+  <div id="finalModal" class="overlay hidden">
+    <div class="card">
+      <div class="emoji">🎉</div>
+      <h1>Treasure Found!</h1>
+      <p>You found the greatest treasure of all: us. I love you.</p>
+      <p><em>Now let's go celebrate.</em></p>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // ============================================================
+    // 1. CUSTOMIZE YOUR STOPS HERE
+    // ============================================================
+    const stops = [
+      {
+        id: 0,
+        name: "Modrý kostolík",
+        coords: [48.1454, 17.1086], // Blue Church
+        radius: 35, // meters
+        riddle: "I am a fairy tale not made of paper, but of stone. My dress is the color of a summer sky, and my roof is a sea of tiny blue waves. Find me, and stand where our story begins.",
+        answers: ["blue church", "modry kostolik", "modrý kostolík", "kostolik", "modry kostol"],
+        challenge: "Take a photo of yourselves in front of the church, mimicking a famous romantic painting or a silly pose.",
+        hint: "It's the Blue Church."
+      },
+      {
+        id: 1,
+        name: "Čumil",
+        coords: [48.1437, 17.1084], // Čumil statue
+        radius: 30,
+        riddle: "A man of bronze, with a cheeky grin, he pops out of the ground to watch the world go by. He works, but never seems to get the job done. Give him a pat for good luck on our hunt.",
+        answers: ["cumil", "čumil", "the watcher", "watcher", "man at work"],
+        challenge: "Rub his head for luck, then take a creative photo from a low angle that makes it look like he is watching over you both.",
+        hint: "He's the manhole guy."
+      },
+      {
+        id: 2,
+        name: "Hviezdoslavovo námestie",
+        coords: [48.1424, 17.1086], // Main square
+        radius: 40,
+        riddle: "A grand square named for a poet, where the old National Theatre stands proud. Find the fountain nearby, and look for the benches where secrets can be shared. This is a good place for a short, sweet rest.",
+        answers: ["hviezdoslavovo namestie", "hviezdoslavovo námestie", "hviezdoslav square", "square"],
+        challenge: "Sit on a bench and tell each other one thing you love most about the other person.",
+        hint: "It's the main square with the fountain."
+      },
+      {
+        id: 3,
+        name: "UFO Bridge",
+        coords: [48.1416, 17.1048], // Most SNP
+        radius: 40,
+        riddle: "A spaceship landed on a bridge, they say. It offers a view that takes your breath away. Ascend to the sky, and look out at the city we're exploring today.",
+        answers: ["ufo", "ufo bridge", "most snp", "snp bridge", "ufo most"],
+        challenge: "Go up to the observation deck. Once there, share a kiss with the panorama of Bratislava as your backdrop.",
+        hint: "It's the bridge with the UFO on top."
+      },
+      {
+        id: 4,
+        name: "Bratislava Castle",
+        coords: [48.1422, 17.1000], // Bratislava Castle
+        radius: 50,
+        riddle: "The final stop is a white castle on a hill, a guardian of the city, standing perfectly still. Climb to its terrace, where our treasure hunt ends. The real treasure, of course, is being here with you, my love.",
+        answers: ["bratislava castle", "hrad", "bratislavsky hrad", "bratislavský hrad", "castle"],
+        challenge: "The treasure is a small gift I have for you. Present it here with a heartfelt message.",
+        hint: "It's the big castle on the hill."
+      }
+    ];
+
+    // ============================================================
+    // 2. APP LOGIC (no need to edit below unless you want to)
+    // ============================================================
+    let currentStopIndex = 0;
+    let map, userMarker, stopMarker, circle;
+    let watchId = null;
+    let currentPosition = null;
+    let isFinal = false;
+
+    function initMap() {
+      map = L.map('map').setView([48.143, 17.108], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      }).addTo(map);
+    }
+
+    function startHunt() {
+      document.getElementById('startScreen').classList.add('hidden');
+      if (!navigator.geolocation) {
+        alert('Geolocation is not supported by your browser.');
+        return;
+      }
+      watchId = navigator.geolocation.watchPosition(onPosition, onError, {
+        enableHighAccuracy: true,
+        maximumAge: 10000,
+        timeout: 10000
+      });
+      showStop(currentStopIndex);
+    }
+
+    function onPosition(pos) {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      currentPosition = [lat, lng];
+
+      if (!userMarker) {
+        userMarker = L.circleMarker([lat, lng], {
+          radius: 8,
+          color: '#2196f3',
+          fillColor: '#2196f3',
+          fillOpacity: 1
+        }).addTo(map);
+      } else {
+        userMarker.setLatLng([lat, lng]);
+      }
+
+      if (currentStopIndex < stops.length && !isFinal) {
+        const stop = stops[currentStopIndex];
+        const bounds = L.latLngBounds([currentPosition, stop.coords]);
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+      }
+
+      checkProximity();
+    }
+
+    function onError(err) {
+      console.warn(err);
+      document.getElementById('status').textContent = 'GPS error: ' + err.message;
+    }
+
+    function checkProximity() {
+      if (isFinal || currentStopIndex >= stops.length) return;
+      const stop = stops[currentStopIndex];
+      if (!currentPosition) return;
+      const dist = distance(currentPosition, stop.coords);
+      document.getElementById('status').textContent = `Distance to next stop: ${Math.round(dist)} m`;
+      if (dist <= stop.radius && !stop.revealed) {
+        stop.revealed = true;
+        showRiddle(stop);
+      }
+    }
+
+    function distance([lat1, lon1], [lat2, lon2]) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function showStop(index) {
+      const stop = stops[index];
+      if (stopMarker) map.removeLayer(stopMarker);
+      if (circle) map.removeLayer(circle);
+      stopMarker = L.marker(stop.coords).addTo(map).bindPopup(stop.name).openPopup();
+      circle = L.circle(stop.coords, {
+        radius: stop.radius,
+        color: '#e91e63',
+        fillColor: '#e91e63',
+        fillOpacity: 0.1
+      }).addTo(map);
+      map.setView(stop.coords, 16);
+    }
+
+    function showRiddle(stop) {
+      document.getElementById('riddleText').textContent = stop.riddle;
+      document.getElementById('answerInput').value = '';
+      document.getElementById('answerError').textContent = '';
+      document.getElementById('riddleModal').classList.remove('hidden');
+    }
+
+    function submitAnswer() {
+      const stop = stops[currentStopIndex];
+      const input = document.getElementById('answerInput').value.trim().toLowerCase();
+      const correct = stop.answers.some(a => normalize(a) === normalize(input));
+      if (correct) {
+        document.getElementById('riddleModal').classList.add('hidden');
+        showChallenge(stop);
+      } else {
+        document.getElementById('answerError').textContent = 'Not quite. Try again!';
+      }
+    }
+
+    function showChallenge(stop) {
+      document.getElementById('challengeText').textContent = stop.challenge;
+      document.getElementById('challengeModal').classList.remove('hidden');
+    }
+
+    function completeChallenge() {
+      document.getElementById('challengeModal').classList.add('hidden');
+      currentStopIndex++;
+      if (currentStopIndex >= stops.length) {
+        showFinal();
+      } else {
+        showStop(currentStopIndex);
+        stops[currentStopIndex].revealed = false;
+      }
+    }
+
+    function showFinal() {
+      isFinal = true;
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+      document.getElementById('finalModal').classList.remove('hidden');
+      document.getElementById('status').textContent = 'Treasure hunt complete!';
+    }
+
+    function normalize(str) {
+      return str
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, '');
+    }
+
+    function showHint() {
+      const stop = stops[currentStopIndex];
+      if (stop && stop.hint) {
+        document.getElementById('answerError').textContent = 'Hint: ' + stop.hint;
+      }
+    }
+
+    // Debug mode: add ?debug=1 to URL to reveal current stop
+    const DEBUG = new URLSearchParams(location.search).has('debug');
+    if (DEBUG) {
+      window.addEventListener('load', () => {
+        const btn = document.createElement('button');
+        btn.textContent = 'Debug: reveal current';
+        btn.style.position = 'absolute';
+        btn.style.bottom = '80px';
+        btn.style.left = '20px';
+        btn.style.zIndex = '2000';
+        btn.style.width = 'auto';
+        btn.style.padding = '10px 16px';
+        btn.style.fontSize = '14px';
+        btn.onclick = () => {
+          const stop = stops[currentStopIndex];
+          if (stop) {
+            stop.revealed = true;
+            showRiddle(stop);
+          }
+        };
+        document.body.appendChild(btn);
+      });
+    }
+
+    // Initialize
+    window.addEventListener('load', () => {
+      initMap();
+      document.getElementById('startBtn').addEventListener('click', startHunt);
+      document.getElementById('submitAnswerBtn').addEventListener('click', submitAnswer);
+      document.getElementById('hintBtn').addEventListener('click', showHint);
+      document.getElementById('completeChallengeBtn').addEventListener('click', completeChallenge);
+    });
+  </script>
+</body>
+</html>
