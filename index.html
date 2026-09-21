@@ -1,4 +1,31 @@
-Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA quirks (stale cache, home-screen viewport issues, no share sheet, etc.). Here's the clean index.html with the PWA bits removed. Everything else stays: pixel cat, debug panel, all stops.
+You only need one file now. The PWA stuff (manifest.json, sw.js) was removed when we switched to browser-only.
+
+📁 Your repo should look like this
+
+```
+TreasureHunt/
+├── index.html      ← the whole app
+└── README.md       ← optional, whatever you had
+```
+
+That's it. Delete manifest.json and sw.js if you uploaded them earlier — nothing references them anymore.
+
+---
+
+📄 index.html
+
+Here is the complete file with everything we've built so far:
+
+· Dark map tiles (CARTO)
+· Pixel cat widget (map, bottom-left) with distance-based fur colors
+· Pixel cat inside the riddle modal
+· Sad face on wrong answer + shake + buzz
+· Happy face on correct answer + bounce + buzz
+· No place names on the map — mystery preserved
+· All 5 stops (Sky Park / Čumil / Hviezdoslavovo / UFO / Castle)
+· Emoji collection + final puzzle (Black Veil Brides)
+· Progress saved in localStorage
+· Debug panel (only with ?debug=1)
 
 ```html
 <!DOCTYPE html>
@@ -17,6 +44,8 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
       background: #111;
       -webkit-tap-highlight-color: transparent;
     }
+    :root { --cat-fur: #FFB74D; }
+
     #map { position: absolute; inset: 0; z-index: 1; }
     #status {
       position: absolute;
@@ -72,7 +101,6 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
     }
     #recenterBtn:active { transform: scale(0.94); }
 
-    /* ---------- PIXEL CAT WIDGET ---------- */
     #catWidget {
       position: absolute;
       bottom: 84px;
@@ -87,15 +115,8 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
       align-items: center;
       box-shadow: 0 4px 16px rgba(0,0,0,0.4);
       min-width: 88px;
-      transition: border-color 0.3s;
     }
     #catWidget.visible { display: flex; }
-    #catSvg {
-      --cat-fur: #FFB74D;
-      display: block;
-      image-rendering: pixelated;
-    }
-    #catSvg .cat-fur { fill: var(--cat-fur); transition: fill 0.4s; }
     #catLabel {
       color: white;
       font-size: 10px;
@@ -106,6 +127,45 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
       text-align: center;
       white-space: nowrap;
       opacity: 0.9;
+    }
+
+    .cat {
+      display: block;
+      image-rendering: pixelated;
+    }
+    .cat .cat-fur { fill: var(--cat-fur); transition: fill 0.4s; }
+    .cat .face-sad, .cat .face-happy { display: none; }
+    .cat.face-sad .face-neutral,
+    .cat.face-happy .face-neutral { display: none; }
+    .cat.face-sad .face-sad { display: block; }
+    .cat.face-happy .face-happy { display: block; }
+
+    #catWidget .weather-snow,
+    #catWidget .weather-sweat,
+    #catWidget .weather-hearts { display: none; }
+    #catWidget.show-snow .weather-snow { display: block; }
+    #catWidget.show-sweat .weather-sweat { display: block; }
+    #catWidget.show-hearts .weather-hearts { display: block; }
+
+    @keyframes catShake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-4px); }
+      40% { transform: translateX(4px); }
+      60% { transform: translateX(-3px); }
+      80% { transform: translateX(3px); }
+    }
+    @keyframes catBounce {
+      0%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-8px); }
+      60% { transform: translateY(-4px); }
+    }
+    .cat.shake { animation: catShake 0.45s ease; }
+    .cat.bounce { animation: catBounce 0.55s ease; }
+
+    .cat-in-modal {
+      margin: 0 auto 12px;
+      width: 64px;
+      height: 64px;
     }
 
     #debugPanel {
@@ -191,6 +251,7 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
       overflow-y: auto;
       border: 1px solid rgba(0,0,0,0.05);
     }
+    .card.shake { animation: catShake 0.45s ease; }
     h1 {
       font-size: 26px;
       margin: 0 0 14px;
@@ -293,23 +354,22 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
   <div id="status">Ready to begin?</div>
   <button id="recenterBtn" title="Recenter">◎</button>
 
-  <!-- PIXEL CAT WIDGET -->
   <div id="catWidget">
-    <svg id="catSvg" viewBox="0 0 16 16" width="56" height="56" shape-rendering="crispEdges">
-      <g id="catSnow" style="display:none">
+    <svg class="cat" viewBox="0 0 16 16" width="56" height="56" shape-rendering="crispEdges">
+      <g class="weather-snow">
         <rect x="0" y="1" width="1" height="1" fill="#BBDEFB"/>
         <rect x="15" y="2" width="1" height="1" fill="#BBDEFB"/>
         <rect x="0" y="13" width="1" height="1" fill="#BBDEFB"/>
         <rect x="15" y="14" width="1" height="1" fill="#BBDEFB"/>
         <rect x="7" y="15" width="1" height="1" fill="#BBDEFB"/>
       </g>
-      <g id="catSweat" style="display:none">
+      <g class="weather-sweat">
         <rect x="0" y="5" width="1" height="2" fill="#64B5F6"/>
         <rect x="15" y="5" width="1" height="2" fill="#64B5F6"/>
         <rect x="0" y="10" width="1" height="2" fill="#64B5F6"/>
         <rect x="15" y="10" width="1" height="2" fill="#64B5F6"/>
       </g>
-      <g id="catHearts" style="display:none">
+      <g class="weather-hearts">
         <rect x="0" y="3" width="1" height="1" fill="#E91E63"/>
         <rect x="15" y="3" width="1" height="1" fill="#E91E63"/>
         <rect x="0" y="12" width="1" height="1" fill="#E91E63"/>
@@ -322,13 +382,37 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
       <rect x="12" y="1" width="3" height="1" class="cat-fur"/>
       <rect x="12" y="2" width="3" height="1" class="cat-fur"/>
       <rect x="1" y="3" width="14" height="11" class="cat-fur"/>
-      <rect x="4" y="6" width="2" height="2" fill="#000"/>
-      <rect x="10" y="6" width="2" height="2" fill="#000"/>
-      <rect x="4" y="6" width="1" height="1" fill="#fff"/>
-      <rect x="10" y="6" width="1" height="1" fill="#fff"/>
-      <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
-      <rect x="6" y="10" width="1" height="1" fill="#000"/>
-      <rect x="9" y="10" width="1" height="1" fill="#000"/>
+      <g class="face-neutral">
+        <rect x="4" y="6" width="2" height="2" fill="#000"/>
+        <rect x="10" y="6" width="2" height="2" fill="#000"/>
+        <rect x="4" y="6" width="1" height="1" fill="#fff"/>
+        <rect x="10" y="6" width="1" height="1" fill="#fff"/>
+        <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+        <rect x="6" y="10" width="1" height="1" fill="#000"/>
+        <rect x="9" y="10" width="1" height="1" fill="#000"/>
+      </g>
+      <g class="face-sad">
+        <rect x="4" y="6" width="1" height="1" fill="#000"/>
+        <rect x="5" y="7" width="1" height="1" fill="#000"/>
+        <rect x="10" y="7" width="1" height="1" fill="#000"/>
+        <rect x="11" y="6" width="1" height="1" fill="#000"/>
+        <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+        <rect x="6" y="11" width="1" height="1" fill="#000"/>
+        <rect x="7" y="10" width="2" height="1" fill="#000"/>
+        <rect x="9" y="11" width="1" height="1" fill="#000"/>
+      </g>
+      <g class="face-happy">
+        <rect x="4" y="7" width="1" height="1" fill="#000"/>
+        <rect x="5" y="6" width="1" height="1" fill="#000"/>
+        <rect x="6" y="7" width="1" height="1" fill="#000"/>
+        <rect x="9" y="7" width="1" height="1" fill="#000"/>
+        <rect x="10" y="6" width="1" height="1" fill="#000"/>
+        <rect x="11" y="7" width="1" height="1" fill="#000"/>
+        <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+        <rect x="6" y="10" width="4" height="1" fill="#000"/>
+        <rect x="5" y="11" width="6" height="1" fill="#000"/>
+        <rect x="6" y="12" width="4" height="1" fill="#F48FB1"/>
+      </g>
     </svg>
     <div id="catLabel">locating…</div>
   </div>
@@ -363,7 +447,47 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
   </div>
 
   <div id="riddleModal" class="overlay hidden">
-    <div class="card">
+    <div class="card" id="riddleCard">
+      <svg class="cat cat-in-modal" viewBox="0 0 16 16" shape-rendering="crispEdges">
+        <rect x="2" y="0" width="2" height="1" class="cat-fur"/>
+        <rect x="1" y="1" width="3" height="1" class="cat-fur"/>
+        <rect x="1" y="2" width="3" height="1" class="cat-fur"/>
+        <rect x="12" y="0" width="2" height="1" class="cat-fur"/>
+        <rect x="12" y="1" width="3" height="1" class="cat-fur"/>
+        <rect x="12" y="2" width="3" height="1" class="cat-fur"/>
+        <rect x="1" y="3" width="14" height="11" class="cat-fur"/>
+        <g class="face-neutral">
+          <rect x="4" y="6" width="2" height="2" fill="#000"/>
+          <rect x="10" y="6" width="2" height="2" fill="#000"/>
+          <rect x="4" y="6" width="1" height="1" fill="#fff"/>
+          <rect x="10" y="6" width="1" height="1" fill="#fff"/>
+          <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+          <rect x="6" y="10" width="1" height="1" fill="#000"/>
+          <rect x="9" y="10" width="1" height="1" fill="#000"/>
+        </g>
+        <g class="face-sad">
+          <rect x="4" y="6" width="1" height="1" fill="#000"/>
+          <rect x="5" y="7" width="1" height="1" fill="#000"/>
+          <rect x="10" y="7" width="1" height="1" fill="#000"/>
+          <rect x="11" y="6" width="1" height="1" fill="#000"/>
+          <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+          <rect x="6" y="11" width="1" height="1" fill="#000"/>
+          <rect x="7" y="10" width="2" height="1" fill="#000"/>
+          <rect x="9" y="11" width="1" height="1" fill="#000"/>
+        </g>
+        <g class="face-happy">
+          <rect x="4" y="7" width="1" height="1" fill="#000"/>
+          <rect x="5" y="6" width="1" height="1" fill="#000"/>
+          <rect x="6" y="7" width="1" height="1" fill="#000"/>
+          <rect x="9" y="7" width="1" height="1" fill="#000"/>
+          <rect x="10" y="6" width="1" height="1" fill="#000"/>
+          <rect x="11" y="7" width="1" height="1" fill="#000"/>
+          <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+          <rect x="6" y="10" width="4" height="1" fill="#000"/>
+          <rect x="5" y="11" width="6" height="1" fill="#000"/>
+          <rect x="6" y="12" width="4" height="1" fill="#F48FB1"/>
+        </g>
+      </svg>
       <h2>Clue</h2>
       <p id="riddleText"></p>
       <input id="answerInput" type="text" placeholder="Your answer" autocomplete="off" />
@@ -422,55 +546,35 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
   <script>
     const stops = [
       {
-        id: 0,
-        name: "Bottova 2/A",
-        coords: [48.1438, 17.1257],
-        radius: 60,
-        emoji: "👰",
+        id: 0, name: "Bottova 2/A", coords: [48.1438, 17.1257], radius: 60, emoji: "👰",
         riddle: "I am young, not old. My lines refuse the rules — they curve and flow like the river beside me. A woman born in Baghdad dreamed me into being. I stand in Bratislava's new downtown, watching the Danube go by. Find me at Bottova 2/A and stand at my base.",
         answers: ["sky park", "skypark", "sky park bratislava", "bottova", "bottova 2a", "bottova 2/a", "bottova 2 a", "zaha hadid", "hadid", "sky park offices"],
         challenge: "Find the little park between the curved towers and take a photo of the two of us there. This is where our hunt begins.",
         hint: "The modern curved buildings near the Danube — Bottova 2/A."
       },
       {
-        id: 1,
-        name: "Čumil",
-        coords: [48.1437, 17.1084],
-        radius: 30,
-        emoji: "⚫",
+        id: 1, name: "Čumil", coords: [48.1437, 17.1084], radius: 30, emoji: "⚫",
         riddle: "A man of bronze, with a cheeky grin, he pops out of the ground to watch the world go by. He works, but never seems to get the job done. Give him a pat for good luck on our hunt.",
         answers: ["cumil", "čumil", "the watcher", "watcher", "man at work"],
         challenge: "Rub his head for luck, then take a creative low-angle photo of the two of us.",
         hint: "The manhole guy."
       },
       {
-        id: 2,
-        name: "Hviezdoslavovo námestie",
-        coords: [48.1424, 17.1086],
-        radius: 40,
-        emoji: "🖤",
+        id: 2, name: "Hviezdoslavovo námestie", coords: [48.1424, 17.1086], radius: 40, emoji: "🖤",
         riddle: "A grand square named for a poet, where the old National Theatre stands proud. Find the fountain nearby, and look for the benches where secrets can be shared. This is a good place for a short, sweet rest.",
         answers: ["hviezdoslavovo namestie", "hviezdoslavovo námestie", "hviezdoslav square", "square"],
         challenge: "Sit on a bench and each tell the other one thing you love most about them.",
         hint: "The main square with the fountain."
       },
       {
-        id: 3,
-        name: "UFO Bridge",
-        coords: [48.1416, 17.1048],
-        radius: 40,
-        emoji: "👰",
+        id: 3, name: "UFO Bridge", coords: [48.1416, 17.1048], radius: 40, emoji: "👰",
         riddle: "A spaceship landed on a bridge, they say. It offers a view that takes your breath away. Ascend to the sky, and look out at the city we're exploring today.",
         answers: ["ufo", "ufo bridge", "most snp", "snp bridge", "ufo most"],
         challenge: "Go up to the observation deck. Once there, share a kiss with the panorama of Bratislava as your backdrop.",
         hint: "The bridge with the UFO on top."
       },
       {
-        id: 4,
-        name: "Bratislava Castle",
-        coords: [48.1422, 17.1000],
-        radius: 50,
-        emoji: "👰",
+        id: 4, name: "Bratislava Castle", coords: [48.1422, 17.1000], radius: 50, emoji: "👰",
         riddle: "The final stop is a white castle on a hill, a guardian of the city, standing perfectly still. Climb to its terrace, where our treasure hunt ends. The real treasure, of course, is being here with you.",
         answers: ["bratislava castle", "hrad", "bratislavsky hrad", "bratislavský hrad", "castle"],
         challenge: "I have something for you. Come find me on the terrace.",
@@ -484,7 +588,7 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
       successMessage: "Black Veil Brides. 🤘\n\nYou found the greatest treasure of all: us. I love you.\n\nNow let's go celebrate. 🖤"
     };
 
-    const STORAGE_KEY = 'catHunt_progress_v7';
+    const STORAGE_KEY = 'catHunt_progress_v8';
 
     let currentStopIndex = 0;
     let isFinal = false;
@@ -492,6 +596,7 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
     let map, userMarker, stopMarker, circle;
     let watchId = null;
     let currentPosition = null;
+    let faceResetTimer = null;
     const DEBUG = new URLSearchParams(location.search).has('debug');
 
     function saveProgress() {
@@ -513,22 +618,12 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
     }
 
     const CAT_FUR = {
-      freezing: '#64B5F6',
-      cold:     '#90CAF9',
-      warm:     '#FFB74D',
-      hot:      '#FF7043',
-      sweating: '#F44336',
-      unknown:  '#9E9E9E',
-      finished: '#E91E63'
+      freezing: '#64B5F6', cold: '#90CAF9', warm: '#FFB74D',
+      hot: '#FF7043', sweating: '#F44336', unknown: '#9E9E9E', finished: '#E91E63'
     };
     const CAT_LABELS = {
-      freezing: 'freezing ❄️',
-      cold:     'cold',
-      warm:     'warm',
-      hot:      'hot 🥵',
-      sweating: 'on fire 🔥',
-      unknown:  'locating…',
-      finished: 'found 💕'
+      freezing: 'freezing ❄️', cold: 'cold', warm: 'warm',
+      hot: 'hot 🥵', sweating: 'on fire 🔥', unknown: 'locating…', finished: 'found 💕'
     };
 
     function catStateFor(dist) {
@@ -543,21 +638,45 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
 
     function updateCat(dist) {
       const state = catStateFor(dist);
-      const svg = document.getElementById('catSvg');
-      svg.style.setProperty('--cat-fur', CAT_FUR[state]);
+      document.documentElement.style.setProperty('--cat-fur', CAT_FUR[state]);
       document.getElementById('catLabel').textContent = CAT_LABELS[state];
-      document.getElementById('catSnow').style.display =
-        (state === 'freezing' || state === 'cold') ? 'block' : 'none';
-      document.getElementById('catSweat').style.display =
-        (state === 'hot' || state === 'sweating') ? 'block' : 'none';
-      document.getElementById('catHearts').style.display =
-        (state === 'finished') ? 'block' : 'none';
+      const w = document.getElementById('catWidget');
+      w.classList.toggle('show-snow', state === 'freezing' || state === 'cold');
+      w.classList.toggle('show-sweat', state === 'hot' || state === 'sweating');
+      w.classList.toggle('show-hearts', state === 'finished');
+    }
+
+    function setCatFace(face) {
+      if (faceResetTimer) { clearTimeout(faceResetTimer); faceResetTimer = null; }
+      document.querySelectorAll('svg.cat').forEach(el => {
+        el.classList.remove('face-sad', 'face-happy');
+        if (face === 'sad') el.classList.add('face-sad');
+        if (face === 'happy') el.classList.add('face-happy');
+      });
+    }
+
+    function autoResetFace(ms) {
+      if (faceResetTimer) clearTimeout(faceResetTimer);
+      faceResetTimer = setTimeout(() => setCatFace('neutral'), ms);
+    }
+
+    function animateCats(anim) {
+      document.querySelectorAll('svg.cat').forEach(el => {
+        el.classList.remove('shake', 'bounce');
+        void el.offsetWidth;
+        el.classList.add(anim);
+        setTimeout(() => el.classList.remove(anim), 700);
+      });
+    }
+
+    function vibrate(pattern) {
+      try { navigator.vibrate && navigator.vibrate(pattern); } catch (e) {}
     }
 
     function initMap() {
       map = L.map('map').setView([48.143, 17.108], 15);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19, attribution: '© OpenStreetMap'
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 20, attribution: '© OpenStreetMap © CARTO'
       }).addTo(map);
     }
 
@@ -565,6 +684,7 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
       document.getElementById('startScreen').classList.add('hidden');
       document.getElementById('recenterBtn').style.display = 'flex';
       document.getElementById('catWidget').classList.add('visible');
+      setCatFace('neutral');
 
       if (!navigator.geolocation) {
         showGpsError('This browser does not support location. Try Safari or Chrome.');
@@ -594,7 +714,8 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
 
       if (!userMarker) {
         userMarker = L.circleMarker([lat, lng], {
-          radius: 8, color: '#2196f3', fillColor: '#2196f3', fillOpacity: 1
+          radius: 8, color: '#42A5F5', fillColor: '#42A5F5', fillOpacity: 1,
+          weight: 2, opacity: 1
         }).addTo(map);
       } else {
         userMarker.setLatLng([lat, lng]);
@@ -646,6 +767,7 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
 
       if (dist <= stop.radius && !stop.revealed) {
         stop.revealed = true;
+        vibrate(60);
         showRiddle(stop);
       }
     }
@@ -672,9 +794,10 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
       const stop = stops[index];
       if (stopMarker) map.removeLayer(stopMarker);
       if (circle) map.removeLayer(circle);
-      stopMarker = L.marker(stop.coords).addTo(map).bindPopup(stop.name).openPopup();
+      stopMarker = L.marker(stop.coords).addTo(map);
       circle = L.circle(stop.coords, {
-        radius: stop.radius, color: '#e91e63', fillColor: '#e91e63', fillOpacity: 0.1
+        radius: stop.radius, color: '#e91e63', fillColor: '#e91e63', fillOpacity: 0.15,
+        weight: 2
       }).addTo(map);
       map.setView(stop.coords, 16);
       hasFittedForStop = true;
@@ -692,6 +815,7 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
     }
 
     function showRiddle(stop) {
+      setCatFace('neutral');
       document.getElementById('riddleText').textContent = stop.riddle;
       document.getElementById('answerInput').value = '';
       document.getElementById('answerError').textContent = '';
@@ -703,11 +827,24 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
       const stop = stops[currentStopIndex];
       const input = document.getElementById('answerInput').value.trim().toLowerCase();
       const correct = stop.answers.some(a => normalize(a) === normalize(input));
+
       if (correct) {
+        setCatFace('happy');
+        animateCats('bounce');
+        vibrate([50, 40, 80]);
         document.getElementById('riddleModal').classList.add('hidden');
-        showChallenge(stop);
+        setTimeout(() => showChallenge(stop), 850);
       } else {
+        setCatFace('sad');
+        animateCats('shake');
+        vibrate([60, 40, 60]);
         document.getElementById('answerError').textContent = 'Not quite. Try again.';
+        const card = document.getElementById('riddleCard');
+        card.classList.remove('shake');
+        void card.offsetWidth;
+        card.classList.add('shake');
+        setTimeout(() => card.classList.remove('shake'), 700);
+        autoResetFace(1800);
       }
     }
 
@@ -737,6 +874,7 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
 
     function continueAfterEmoji() {
       document.getElementById('emojiModal').classList.add('hidden');
+      setCatFace('neutral');
       if (currentStopIndex >= stops.length) {
         isFinal = true;
         saveProgress();
@@ -757,6 +895,7 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
       document.getElementById('finalGuessModal').classList.remove('hidden');
       document.getElementById('emojiBar').style.display = 'none';
       updateCat(0);
+      setCatFace('happy');
       updateDebugStopGrid();
     }
 
@@ -764,14 +903,20 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
       const input = document.getElementById('finalAnswerInput').value.trim();
       const correct = finalPuzzle.answers.some(a => normalize(a) === normalize(input));
       if (correct) {
+        setCatFace('happy');
+        animateCats('bounce');
+        vibrate([80, 60, 120]);
         document.getElementById('finalGuessModal').classList.add('hidden');
         document.getElementById('finalTitle').textContent = finalPuzzle.successTitle;
         document.getElementById('finalMessage').textContent = finalPuzzle.successMessage;
         document.getElementById('finalModal').classList.remove('hidden');
-        document.getElementById('catWidget').style.display = 'none';
       } else {
+        setCatFace('sad');
+        animateCats('shake');
+        vibrate([60, 40, 60]);
         document.getElementById('finalAnswerError').textContent =
           'Not quite. Look at the pieces one more time.';
+        autoResetFace(1800);
       }
     }
 
@@ -821,6 +966,8 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
       const finished = stops[currentStopIndex];
       currentStopIndex++;
       saveProgress(); updateEmojiBar();
+      setCatFace('happy');
+      animateCats('bounce');
       showEmojiReveal(finished);
     }
     function debugSkipRiddle() {
@@ -900,30 +1047,34 @@ Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA 
 </html>
 ```
 
-🗑️ What to clean up in your repo
+---
 
-Delete these two files (they're no longer referenced):
+🚀 Deploy checklist
 
-· manifest.json
-· sw.js
+1. In your GitHub repo (Granko15/TreasureHunt):
+   · Replace index.html with the file above
+   · Delete manifest.json and sw.js if they exist (no longer used)
+2. Commit changes — GitHub Pages redeploys in ~1 minute
+3. Test: open https://granko15.github.io/TreasureHunt/?debug=1 → tap Reset → tap Start → test the flow
+4. Before the real day: open https://granko15.github.io/TreasureHunt (no ?debug=1) in Safari → everything's ready
 
-Or just leave them — they won't be loaded since index.html no longer links them. Deleting keeps the repo clean.
+---
 
-📲 How to share it with her
+📋 Full feature list
 
-Simplest and most reliable:
+Feature Status
+Dark map (CARTO) ✅
+No place names on map ✅
+5 stops with GPS triggers ✅
+Riddle → Challenge → Emoji flow ✅
+Pixel cat widget (distance-based) ✅
+Cat sad face + shake + buzz (wrong) ✅
+Cat happy face + bounce + buzz (correct) ✅
+Emoji collection bar ✅
+Final puzzle (Black Veil Brides) ✅
+Progress saved (resume after close) ✅
+Friendly GPS error message ✅
+Vibration (Android only — iOS doesn't support) ✅
+Debug panel (?debug=1) ✅
 
-1. Send her the plain URL:
-   https://granko15.github.io/TreasureHunt
-2. Tell her to open it in Safari (not a chat webview)
-3. She can bookmark it or keep it as a tab — that's it
-
-No home screen icon, no install prompt, no cache weirdness. Works exactly like it does for you in the browser right now.
-
-🧪 Before the real day
-
-· Reset progress via ?debug=1 → Reset button so she starts clean
-· Test the pixel cat by walking around — it should shift colors as you approach each stop
-· If any of the distances feel off in the city, tell me the actual meters and I'll retune the thresholds
-
-Anything else you want to add before this goes live?
+That's everything. One file, done. 🖤
