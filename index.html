@@ -706,4 +706,310 @@
       if (err.code === 1) {
         message = "Location access is blocked. Here's how to fix it:\n\n" +
           "iPhone:\n" +
-          "• Settings → Privacy &
+          "• Settings → Privacy & Security → Location Services → make sure it's ON\n" +
+          "• Then find Safari (and Chrome) in the list and set to 'While Using'\n" +
+          "• Also: Settings → General → Transfer or Reset iPhone → Reset → Reset Location & Privacy\n\n" +
+          "Android:\n" +
+          "• Tap the lock icon next to the URL → Permissions → Location → Allow\n\n" +
+          "Then reload the page.";
+      } else if (err.code === 2) {
+        message = "Your location couldn't be determined. Move somewhere with a clearer view of the sky and try again.";
+      } else if (err.code === 3) {
+        message = "Location request timed out. Move to a more open spot and try again.";
+      }
+      showGpsError(message);
+    }
+
+    function showGpsError(msg) {
+      document.getElementById('gpsErrorMessage').textContent = msg;
+      document.getElementById('gpsErrorModal').classList.remove('hidden');
+    }
+
+    function checkProximity() {
+      if (isFinal || currentStopIndex >= stops.length) { updateCat(0); return; }
+      const stop = stops[currentStopIndex];
+      if (!currentPosition) { updateCat(null); return; }
+
+      const dist = distance(currentPosition, stop.coords);
+      document.getElementById('status').textContent = `${Math.round(dist)} m to the next clue`;
+      updateCat(dist);
+
+      if (dist <= stop.radius && !stop.revealed) {
+        stop.revealed = true;
+        vibrate(60);
+        showRiddle(stop);
+      }
+    }
+
+    function distance([lat1, lon1], [lat2, lon2]) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function closeAllModals() {
+      ['startScreen','riddleModal','challengeModal','emojiModal',
+       'finalGuessModal','finalModal','gpsErrorModal'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+    }
+
+    function showStop(index) {
+      hasFittedForStop = false;
+      const stop = stops[index];
+      if (stopMarker) map.removeLayer(stopMarker);
+      if (circle) map.removeLayer(circle);
+      stopMarker = L.marker(stop.coords).addTo(map);
+      circle = L.circle(stop.coords, {
+        radius: stop.radius, color: '#e91e63', fillColor: '#e91e63', fillOpacity: 0.1
+      }).addTo(map);
+      map.setView(stop.coords, 16);
+      hasFittedForStop = true;
+      updateDebugStopGrid();
+    }
+
+    function recenter() {
+      if (currentStopIndex >= stops.length || isFinal) {
+        if (currentPosition) map.setView(currentPosition, 16);
+        return;
+      }
+      const stop = stops[currentStopIndex];
+      const bounds = L.latLngBounds([currentPosition || stop.coords, stop.coords]);
+      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
+    }
+
+    function showRiddle(stop) {
+      setCatFace('neutral');
+      document.getElementById('riddleText').textContent = stop.riddle;
+      document.getElementById('answerInput').value = '';
+      document.getElementById('answerError').textContent = '';
+      document.getElementById('riddleModal').classList.remove('hidden');
+      document.getElementById('recenterBtn').style.display = 'none';
+    }
+
+    function submitAnswer() {
+      const stop = stops[currentStopIndex];
+      const input = document.getElementById('answerInput').value.trim().toLowerCase();
+      const correct = stop.answers.some(a => normalize(a) === normalize(input));
+
+      if (correct) {
+        setCatFace('happy');
+        animateCats('bounce');
+        vibrate([50, 40, 80]);
+        document.getElementById('riddleModal').classList.add('hidden');
+        setTimeout(() => showChallenge(stop), 850);
+      } else {
+        setCatFace('sad');
+        animateCats('shake');
+        vibrate([60, 40, 60]);
+        document.getElementById('answerError').textContent = 'Not quite. Try again.';
+        const card = document.getElementById('riddleCard');
+        card.classList.remove('shake');
+        void card.offsetWidth;
+        card.classList.add('shake');
+        setTimeout(() => card.classList.remove('shake'), 700);
+        autoResetFace(1800);
+      }
+    }
+
+    function showChallenge(stop) {
+      document.getElementById('challengeText').textContent = stop.challenge;
+      document.getElementById('challengeModal').classList.remove('hidden');
+    }
+
+    function completeChallenge() {
+      document.getElementById('challengeModal').classList.add('hidden');
+      const finishedStop = stops[currentStopIndex];
+      currentStopIndex++;
+      saveProgress();
+      updateEmojiBar();
+      showEmojiReveal(finishedStop);
+    }
+
+    function showEmojiReveal(stop) {
+      document.getElementById('emojiBig').textContent = stop.emoji;
+      const collected = collectedEmojis();
+      const text = collected.length < stops.length
+        ? `You've collected ${collected.length} of ${stops.length} pieces. Keep going.`
+        : `That's all five. Time to figure out what they spell.`;
+      document.getElementById('emojiProgressText').textContent = text;
+      document.getElementById('emojiModal').classList.remove('hidden');
+    }
+
+    function continueAfterEmoji() {
+      document.getElementById('emojiModal').classList.add('hidden');
+      setCatFace('neutral');
+      if (currentStopIndex >= stops.length) {
+        isFinal = true;
+        saveProgress();
+        showFinalGuess();
+      } else {
+        document.getElementById('recenterBtn').style.display = 'flex';
+        showStop(currentStopIndex);
+      }
+    }
+
+    function showFinalGuess() {
+      if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+      document.getElementById('recenterBtn').style.display = 'none';
+      document.getElementById('status').textContent = 'Final puzzle';
+      document.getElementById('finalEmojis').textContent = stops.map(s => s.emoji).join(' ');
+      document.getElementById('finalAnswerInput').value = '';
+      document.getElementById('finalAnswerError').textContent = '';
+      document.getElementById('finalGuessModal').classList.remove('hidden');
+      document.getElementById('emojiBar').style.display = 'none';
+      updateCat(0);
+      setCatFace('happy');
+      updateDebugStopGrid();
+    }
+
+    function submitFinalGuess() {
+      const input = document.getElementById('finalAnswerInput').value.trim();
+      const correct = finalPuzzle.answers.some(a => normalize(a) === normalize(input));
+      if (correct) {
+        setCatFace('happy');
+        animateCats('bounce');
+        vibrate([80, 60, 120]);
+        document.getElementById('finalGuessModal').classList.add('hidden');
+        document.getElementById('finalTitle').textContent = finalPuzzle.successTitle;
+        document.getElementById('finalMessage').textContent = finalPuzzle.successMessage;
+        document.getElementById('finalModal').classList.remove('hidden');
+      } else {
+        setCatFace('sad');
+        animateCats('shake');
+        vibrate([60, 40, 60]);
+        document.getElementById('finalAnswerError').textContent =
+          'Not quite. Look at the pieces one more time.';
+        autoResetFace(1800);
+      }
+    }
+
+    function normalize(str) {
+      return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
+    }
+
+    function showHint() {
+      const stop = stops[currentStopIndex];
+      if (stop && stop.hint) document.getElementById('answerError').textContent = 'Hint: ' + stop.hint;
+    }
+
+    function updateDebugStopGrid() {
+      const grid = document.getElementById('debugStopGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      stops.forEach((s, i) => {
+        const b = document.createElement('button');
+        b.textContent = `${i + 1}`;
+        if (i === currentStopIndex && !isFinal) b.classList.add('active');
+        b.onclick = () => debugJumpToStop(i);
+        grid.appendChild(b);
+      });
+      if (isFinal) {
+        const b = document.createElement('button');
+        b.textContent = '✓';
+        b.classList.add('active');
+        b.onclick = () => { closeAllModals(); showFinalGuess(); };
+        grid.appendChild(b);
+      }
+    }
+
+    function debugJumpToStop(index) {
+      closeAllModals();
+      currentStopIndex = index;
+      isFinal = false;
+      stops.forEach((s, i) => { s.revealed = (i < index); });
+      saveProgress(); updateEmojiBar();
+      document.getElementById('recenterBtn').style.display = 'flex';
+      showStop(index);
+      stops[index].revealed = true;
+      showRiddle(stops[index]);
+    }
+    function debugSolveCurrent() {
+      closeAllModals();
+      if (isFinal || currentStopIndex >= stops.length) return;
+      const finished = stops[currentStopIndex];
+      currentStopIndex++;
+      saveProgress(); updateEmojiBar();
+      setCatFace('happy');
+      animateCats('bounce');
+      showEmojiReveal(finished);
+    }
+    function debugSkipRiddle() {
+      closeAllModals();
+      if (isFinal || currentStopIndex >= stops.length) return;
+      showChallenge(stops[currentStopIndex]);
+    }
+    function debugSkip() {
+      closeAllModals();
+      if (isFinal || currentStopIndex >= stops.length) return;
+      currentStopIndex++;
+      saveProgress(); updateEmojiBar();
+      if (currentStopIndex >= stops.length) { isFinal = true; saveProgress(); showFinalGuess(); }
+      else { showStop(currentStopIndex); }
+    }
+    function debugEnd() {
+      closeAllModals();
+      currentStopIndex = stops.length;
+      isFinal = true;
+      saveProgress(); updateEmojiBar();
+      showFinalGuess();
+    }
+    function debugReset() { clearProgress(); location.reload(); }
+
+    function initDebugPanel() {
+      if (!DEBUG) return;
+      document.getElementById('debugPanel').classList.add('visible');
+      document.getElementById('dbgSolve').onclick = debugSolveCurrent;
+      document.getElementById('dbgSkip').onclick = debugSkip;
+      document.getElementById('dbgEnd').onclick = debugEnd;
+      document.getElementById('dbgSkipRiddle').onclick = debugSkipRiddle;
+      document.getElementById('dbgReset').onclick = debugReset;
+      document.getElementById('dbgHide').onclick = () => document.getElementById('debugPanel').style.display = 'none';
+      document.getElementById('dbgShow').onclick = () => document.getElementById('debugPanel').style.display = 'block';
+      updateDebugStopGrid();
+    }
+
+    window.addEventListener('load', () => {
+      initMap();
+
+      const saved = loadProgress();
+      if (saved && saved.currentStopIndex > 0 && !saved.isFinal) {
+        currentStopIndex = saved.currentStopIndex;
+        isFinal = false;
+        document.getElementById('startMessage').textContent =
+          `Welcome back. You're on stop ${Math.min(currentStopIndex + 1, stops.length)} of ${stops.length}.`;
+        document.getElementById('startBtn').textContent = 'Start fresh';
+        document.getElementById('resumeBtn').style.display = 'block';
+        document.getElementById('restartBtn').style.display = 'block';
+      }
+
+      document.getElementById('startBtn').addEventListener('click', () => startHunt(false));
+      document.getElementById('resumeBtn').addEventListener('click', () => startHunt(true));
+      document.getElementById('restartBtn').addEventListener('click', () => {
+        clearProgress();
+        currentStopIndex = 0;
+        isFinal = false;
+        stops.forEach(s => s.revealed = false);
+        updateEmojiBar();
+        startHunt(true);
+      });
+      document.getElementById('submitAnswerBtn').addEventListener('click', submitAnswer);
+      document.getElementById('hintBtn').addEventListener('click', showHint);
+      document.getElementById('completeChallengeBtn').addEventListener('click', completeChallenge);
+      document.getElementById('continueBtn').addEventListener('click', continueAfterEmoji);
+      document.getElementById('submitFinalBtn').addEventListener('click', submitFinalGuess);
+      document.getElementById('gpsRetryBtn').addEventListener('click', () => {
+        document.getElementById('gpsErrorModal').classList.add('hidden');
+        startHunt(true);
+      });
+      document.getElementById('recenterBtn').addEventListener('click', recenter);
+
+      initDebugPanel();
+    });
+  </script>
+</body>
+</html>
