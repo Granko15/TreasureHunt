@@ -1,4 +1,4 @@
-Here's the full file with testing buttons added. They only appear when you open the URL with ?debug=1, so your girlfriend never sees them.
+Here's the full updated file with Sky Park as the first stop. Everything else stays the same.
 
 ```html
 <!DOCTYPE html>
@@ -6,7 +6,7 @@ Here's the full file with testing buttons added. They only appear when you open 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>🐱 Bratislava Cat Hunt</title>
+  <title>Bratislava Treasure Hunt</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     * { box-sizing: border-box; }
@@ -21,45 +21,48 @@ Here's the full file with testing buttons added. They only appear when you open 
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background: white;
-      padding: 10px 18px;
+      background: rgba(20,20,20,0.92);
+      color: white;
+      padding: 10px 20px;
       border-radius: 999px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
       z-index: 500;
       font-weight: 600;
       font-size: 14px;
       max-width: 90vw;
       text-align: center;
+      letter-spacing: 0.3px;
     }
     #emojiBar {
       position: absolute;
-      top: 12px;
+      top: 14px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(255,255,255,0.95);
-      padding: 8px 16px;
+      background: rgba(20,20,20,0.92);
+      color: white;
+      padding: 10px 20px;
       border-radius: 999px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
       z-index: 500;
-      font-size: 22px;
-      letter-spacing: 4px;
+      font-size: 24px;
+      letter-spacing: 8px;
       display: none;
-      min-height: 44px;
       align-items: center;
+      border: 1px solid rgba(255,255,255,0.1);
     }
     #recenterBtn {
       position: absolute;
       bottom: 84px;
       right: 16px;
       z-index: 500;
-      background: white;
-      color: #e91e63;
-      border: none;
+      background: rgba(20,20,20,0.92);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.15);
       border-radius: 50%;
       width: 52px;
       height: 52px;
-      font-size: 24px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      font-size: 20px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
       cursor: pointer;
       display: none;
       align-items: center;
@@ -74,7 +77,7 @@ Here's the full file with testing buttons added. They only appear when you open 
       left: 12px;
       right: 12px;
       z-index: 2500;
-      background: rgba(0,0,0,0.85);
+      background: rgba(0,0,0,0.88);
       border-radius: 16px;
       padding: 12px;
       color: white;
@@ -85,11 +88,11 @@ Here's the full file with testing buttons added. They only appear when you open 
     #debugPanel.visible { display: block; }
     #debugPanel h3 {
       margin: 0 0 8px;
-      font-size: 13px;
+      font-size: 12px;
       text-align: center;
-      letter-spacing: 1px;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
-      opacity: 0.8;
+      opacity: 0.6;
     }
     .debugGrid {
       display: grid;
@@ -101,7 +104,7 @@ Here's the full file with testing buttons added. They only appear when you open 
       padding: 10px 4px;
       font-size: 13px;
       font-weight: 700;
-      background: #444;
+      background: #333;
       color: white;
       border-radius: 10px;
       border: none;
@@ -112,12 +115,13 @@ Here's the full file with testing buttons added. They only appear when you open 
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 6px;
+      margin-top: 6px;
     }
     .debugRow button {
       padding: 10px 6px;
       font-size: 12px;
       font-weight: 700;
-      background: #333;
+      background: #2a2a2a;
       color: white;
       border-radius: 10px;
       border: none;
@@ -129,54 +133,84 @@ Here's the full file with testing buttons added. They only appear when you open 
     .overlay {
       position: absolute;
       inset: 0;
-      background: rgba(0,0,0,0.75);
+      background: rgba(0,0,0,0.82);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 1000;
       padding: 20px;
-      backdrop-filter: blur(4px);
+      backdrop-filter: blur(6px);
     }
     .overlay.hidden { display: none; }
     .card {
-      background: white;
-      border-radius: 24px;
-      padding: 28px 24px;
+      background: #fafafa;
+      border-radius: 20px;
+      padding: 32px 26px;
       max-width: 420px;
       width: 100%;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
       text-align: center;
       max-height: 90vh;
       overflow-y: auto;
+      border: 1px solid rgba(0,0,0,0.05);
     }
-    h1 { font-size: 24px; margin: 0 0 12px; }
-    h2 { font-size: 20px; margin: 0 0 12px; }
-    p { line-height: 1.6; margin: 0 0 16px; color: #333; white-space: pre-line; }
+    h1 {
+      font-size: 26px;
+      margin: 0 0 14px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: #1a1a1a;
+    }
+    h2 {
+      font-size: 18px;
+      margin: 0 0 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #999;
+    }
+    p {
+      line-height: 1.65;
+      margin: 0 0 18px;
+      color: #444;
+      white-space: pre-line;
+      font-size: 15px;
+    }
     input {
       width: 100%;
       padding: 14px 16px;
-      border: 2px solid #ddd;
-      border-radius: 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
       font-size: 16px;
       margin-bottom: 12px;
       outline: none;
       transition: border 0.2s;
+      background: white;
     }
     input:focus { border-color: #e91e63; }
     button {
-      background: #e91e63;
+      background: #1a1a1a;
       color: white;
       border: none;
       border-radius: 999px;
-      padding: 14px 28px;
-      font-size: 16px;
-      font-weight: 700;
+      padding: 15px 28px;
+      font-size: 15px;
+      font-weight: 600;
       cursor: pointer;
       width: 100%;
+      letter-spacing: 0.5px;
       transition: transform 0.1s, background 0.2s;
     }
     button:active { transform: scale(0.97); }
-    button.secondary { background: #9e9e9e; margin-top: 8px; }
+    button:hover { background: #000; }
+    button.secondary {
+      background: transparent;
+      color: #888;
+      border: 2px solid #e0e0e0;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+    button.secondary:hover { background: #f0f0f0; color: #555; }
     button.ghost {
       background: transparent;
       color: #e91e63;
@@ -185,22 +219,29 @@ Here's the full file with testing buttons added. They only appear when you open 
     }
     .error {
       color: #d32f2f;
-      font-size: 14px;
+      font-size: 13px;
       margin-bottom: 12px;
       min-height: 20px;
     }
-    .emoji { font-size: 48px; margin-bottom: 8px; }
     .bigEmoji {
-      font-size: 96px;
+      font-size: 100px;
       line-height: 1;
-      margin: 16px 0 20px;
+      margin: 24px 0 28px;
       animation: pop 0.5s ease-out;
     }
     .revealRow {
-      font-size: 44px;
-      letter-spacing: 6px;
-      margin: 8px 0 20px;
+      font-size: 48px;
+      letter-spacing: 10px;
+      margin: 24px 0 28px;
       word-break: break-word;
+      color: #1a1a1a;
+    }
+    .divider {
+      width: 40px;
+      height: 2px;
+      background: #e91e63;
+      margin: 20px auto;
+      opacity: 0.6;
     }
     @keyframes pop {
       0% { transform: scale(0.3); opacity: 0; }
@@ -212,33 +253,36 @@ Here's the full file with testing buttons added. They only appear when you open 
 <body>
   <div id="map"></div>
   <div id="emojiBar"></div>
-  <div id="status">Ready to start? 🐾</div>
-  <button id="recenterBtn" title="Recenter">🐾</button>
+  <div id="status">Ready to begin?</div>
+  <button id="recenterBtn" title="Recenter">◎</button>
 
   <!-- DEBUG PANEL (only visible with ?debug=1) -->
   <div id="debugPanel">
-    <h3>🐾 Debug Panel</h3>
+    <h3>Debug Panel</h3>
     <div class="debugGrid" id="debugStopGrid"></div>
     <div class="debugRow">
-      <button id="dbgSolve" class="good">✅ Solve</button>
-      <button id="dbgSkip" class="good">⏭ Skip</button>
-      <button id="dbgEnd" class="good">🏁 End</button>
+      <button id="dbgSolve" class="good">Solve</button>
+      <button id="dbgSkip" class="good">Skip</button>
+      <button id="dbgEnd" class="good">End</button>
     </div>
-    <div class="debugRow" style="margin-top:6px;">
-      <button id="dbgHide">👁 Hide</button>
-      <button id="dbgShow">👁 Show</button>
-      <button id="dbgReset" class="danger">🔄 Reset</button>
+    <div class="debugRow">
+      <button id="dbgSkipRiddle" class="good">Skip Riddle</button>
+      <button id="dbgHide">Hide</button>
+      <button id="dbgShow">Show</button>
+    </div>
+    <div class="debugRow">
+      <button id="dbgReset" class="danger">Reset</button>
     </div>
   </div>
 
   <!-- Start screen -->
   <div id="startScreen" class="overlay">
     <div class="card">
-      <div class="emoji">🐱💕</div>
-      <h1>Bratislava Cat Hunt</h1>
-      <p id="startMessage">For my favorite cat person in the world. Follow the clues, solve the riddles, and collect all 5 emojis. At the end, you'll have to guess what they spell. Meow. 🐾</p>
-      <button id="startBtn">Start the hunt 🐾</button>
-      <button id="resumeBtn" class="ghost" style="display:none;">Continue where you left off 🐈</button>
+      <h1>Bratislava</h1>
+      <div class="divider"></div>
+      <p id="startMessage">A treasure hunt made just for you. Follow the clues through the city, solve each riddle, and collect the five pieces of the final puzzle. The treasure at the end is worth it — I promise.</p>
+      <button id="startBtn">Begin</button>
+      <button id="resumeBtn" class="ghost" style="display:none;">Continue</button>
       <button id="restartBtn" class="secondary" style="display:none;">Start over</button>
     </div>
   </div>
@@ -246,68 +290,62 @@ Here's the full file with testing buttons added. They only appear when you open 
   <!-- Riddle modal -->
   <div id="riddleModal" class="overlay hidden">
     <div class="card">
-      <div class="emoji">🐈</div>
-      <h2>Purr-iddle</h2>
+      <h2>Clue</h2>
       <p id="riddleText"></p>
-      <input id="answerInput" type="text" placeholder="Your answer, kitten..." autocomplete="off" />
+      <input id="answerInput" type="text" placeholder="Your answer" autocomplete="off" />
       <div id="answerError" class="error"></div>
       <button id="submitAnswerBtn">Submit</button>
-      <button id="hintBtn" class="secondary">Hint 🐾</button>
+      <button id="hintBtn" class="secondary">Hint</button>
     </div>
   </div>
 
   <!-- Challenge modal -->
   <div id="challengeModal" class="overlay hidden">
     <div class="card">
-      <div class="emoji">😻</div>
-      <h2>Cat-tivity</h2>
+      <h2>Challenge</h2>
       <p id="challengeText"></p>
-      <button id="completeChallengeBtn">Done 🐾</button>
+      <button id="completeChallengeBtn">Done</button>
     </div>
   </div>
 
   <!-- Emoji reveal modal -->
   <div id="emojiModal" class="overlay hidden">
     <div class="card">
-      <div class="emoji">✨</div>
-      <h2>Emoji unlocked!</h2>
+      <h2>Piece unlocked</h2>
       <div id="emojiBig" class="bigEmoji"></div>
       <p id="emojiProgressText"></p>
-      <button id="continueBtn">Continue 🐾</button>
+      <button id="continueBtn">Continue</button>
     </div>
   </div>
 
   <!-- Final guess modal -->
   <div id="finalGuessModal" class="overlay hidden">
     <div class="card">
-      <div class="emoji">🎁</div>
-      <h2>Final challenge, kitten</h2>
-      <p id="finalGuessIntro">You collected all 5 emojis — but they're NOT in order:</p>
+      <h2>Final Puzzle</h2>
+      <p id="finalGuessIntro">You collected all five pieces — but they're <strong>not in order</strong>.</p>
       <div id="finalEmojis" class="revealRow"></div>
-      <p>Rearrange them in your head and guess the band. 🐾</p>
-      <input id="finalAnswerInput" type="text" placeholder="Your guess..." autocomplete="off" />
+      <p>Rearrange them and tell me what they spell.</p>
+      <input id="finalAnswerInput" type="text" placeholder="Your answer" autocomplete="off" />
       <div id="finalAnswerError" class="error"></div>
-      <button id="submitFinalBtn">Submit guess 🐾</button>
+      <button id="submitFinalBtn">Submit</button>
     </div>
   </div>
 
   <!-- Final success modal -->
   <div id="finalModal" class="overlay hidden">
     <div class="card">
-      <div class="emoji">🎉🐱🎉</div>
-      <h1 id="finalTitle">You got it!</h1>
+      <h1 id="finalTitle">You got it</h1>
+      <div class="divider"></div>
       <p id="finalMessage"></p>
-      <p><em>Now let's go celebrate — cat style.</em></p>
     </div>
   </div>
 
   <!-- GPS error modal -->
   <div id="gpsErrorModal" class="overlay hidden">
     <div class="card">
-      <div class="emoji">🙀</div>
-      <h2>Location, please!</h2>
+      <h2>Location needed</h2>
       <p id="gpsErrorMessage"></p>
-      <button id="gpsRetryBtn">Try again 🐾</button>
+      <button id="gpsRetryBtn">Try again</button>
     </div>
   </div>
 
@@ -315,18 +353,20 @@ Here's the full file with testing buttons added. They only appear when you open 
   <script>
     // ============================================================
     // 1. CUSTOMIZE YOUR STOPS HERE
+    //    Emojis are intentionally OUT OF ORDER.
+    //    Correct order: ⚫ 👰 👰 👰 🖤  →  Black Veil Brides
     // ============================================================
     const stops = [
       {
         id: 0,
-        name: "Modrý kostolík",
-        coords: [48.1454, 17.1086],
-        radius: 35,
+        name: "Sky Park",
+        coords: [48.1440, 17.1155],
+        radius: 45,
         emoji: "👰",
-        riddle: "I am a fairy tale not made of paper, but of stone. My dress is the color of a summer sky, and my roof is a sea of tiny blue waves. Find me, and stand where our story begins.",
-        answers: ["blue church", "modry kostolik", "modrý kostolík", "kostolik", "modry kostol"],
-        challenge: "Take a photo of yourselves in front of the church, mimicking a famous romantic painting or a silly pose.",
-        hint: "It's the Blue Church. 🐾"
+        riddle: "I am young, not old. My lines refuse the rules — they curve and flow like the river beside me. A woman born in Baghdad dreamed me into being. I stand in Bratislava's new downtown, watching the Danube go by. Find me and stand at my base.",
+        answers: ["sky park", "skypark", "sky park bratislava", "bottova", "bottova 2a", "bottova 2/a", "zaha hadid", "hadid"],
+        challenge: "Find the little park between the curved towers and take a photo of the two of us there. This is where our hunt begins.",
+        hint: "The modern curved buildings near the Danube."
       },
       {
         id: 1,
@@ -336,8 +376,8 @@ Here's the full file with testing buttons added. They only appear when you open 
         emoji: "⚫",
         riddle: "A man of bronze, with a cheeky grin, he pops out of the ground to watch the world go by. He works, but never seems to get the job done. Give him a pat for good luck on our hunt.",
         answers: ["cumil", "čumil", "the watcher", "watcher", "man at work"],
-        challenge: "Rub his head for luck, then take a creative photo from a low angle that makes it look like he is watching over you both.",
-        hint: "He's the manhole guy. 🐾"
+        challenge: "Rub his head for luck, then take a creative low-angle photo of the two of us.",
+        hint: "The manhole guy."
       },
       {
         id: 2,
@@ -347,8 +387,8 @@ Here's the full file with testing buttons added. They only appear when you open 
         emoji: "🖤",
         riddle: "A grand square named for a poet, where the old National Theatre stands proud. Find the fountain nearby, and look for the benches where secrets can be shared. This is a good place for a short, sweet rest.",
         answers: ["hviezdoslavovo namestie", "hviezdoslavovo námestie", "hviezdoslav square", "square"],
-        challenge: "Sit on a bench and tell each other one thing you love most about the other person.",
-        hint: "It's the main square with the fountain. 🐾"
+        challenge: "Sit on a bench and each tell the other one thing you love most about them.",
+        hint: "The main square with the fountain."
       },
       {
         id: 3,
@@ -359,7 +399,7 @@ Here's the full file with testing buttons added. They only appear when you open 
         riddle: "A spaceship landed on a bridge, they say. It offers a view that takes your breath away. Ascend to the sky, and look out at the city we're exploring today.",
         answers: ["ufo", "ufo bridge", "most snp", "snp bridge", "ufo most"],
         challenge: "Go up to the observation deck. Once there, share a kiss with the panorama of Bratislava as your backdrop.",
-        hint: "It's the bridge with the UFO on top. 🐾"
+        hint: "The bridge with the UFO on top."
       },
       {
         id: 4,
@@ -367,10 +407,10 @@ Here's the full file with testing buttons added. They only appear when you open 
         coords: [48.1422, 17.1000],
         radius: 50,
         emoji: "👰",
-        riddle: "The final stop is a white castle on a hill, a guardian of the city, standing perfectly still. Climb to its terrace, where our treasure hunt ends. The real treasure, of course, is being here with you, my love.",
+        riddle: "The final stop is a white castle on a hill, a guardian of the city, standing perfectly still. Climb to its terrace, where our treasure hunt ends. The real treasure, of course, is being here with you.",
         answers: ["bratislava castle", "hrad", "bratislavsky hrad", "bratislavský hrad", "castle"],
-        challenge: "The treasure is a small gift I have for you. Present it here with a heartfelt message.",
-        hint: "It's the big castle on the hill. 🐾"
+        challenge: "I have something for you. Come find me on the terrace.",
+        hint: "The big castle on the hill."
       }
     ];
 
@@ -383,14 +423,14 @@ Here's the full file with testing buttons added. They only appear when you open 
         "blackveilbrides",
         "bvb"
       ],
-      successTitle: "You got it!",
-      successMessage: "Black Veil Brides. 🤘 You found the greatest treasure of all: us. I love you, my favorite cat person. 🐾💕"
+      successTitle: "You got it",
+      successMessage: "Black Veil Brides. 🤘\n\nYou found the greatest treasure of all: us. I love you.\n\nNow let's go celebrate. 🖤"
     };
 
     // ============================================================
     // 3. APP STATE + PERSISTENCE
     // ============================================================
-    const STORAGE_KEY = 'catHunt_progress_v3';
+    const STORAGE_KEY = 'catHunt_progress_v4';
 
     let currentStopIndex = 0;
     let isFinal = false;
@@ -448,7 +488,7 @@ Here's the full file with testing buttons added. They only appear when you open 
       });
       if (isFinal) {
         const b = document.createElement('button');
-        b.textContent = '🏁';
+        b.textContent = '✓';
         b.classList.add('active');
         b.onclick = () => { closeAllModals(); showFinalGuess(); };
         grid.appendChild(b);
@@ -523,7 +563,7 @@ Here's the full file with testing buttons added. They only appear when you open 
 
     function onError(err) {
       console.warn(err);
-      let message = "We need your location to start the hunt, kitten. 🐾 ";
+      let message = "We need your location to start the hunt. ";
 
       if (err.code === 1) {
         message = "Location access is blocked. Here's how to fix it:\n\n" +
@@ -533,11 +573,11 @@ Here's the full file with testing buttons added. They only appear when you open 
           "• Also: Settings → General → Transfer or Reset iPhone → Reset → Reset Location & Privacy\n\n" +
           "Android:\n" +
           "• Tap the lock icon next to the URL → Permissions → Location → Allow\n\n" +
-          "Then reload the page. 🐈";
+          "Then reload the page.";
       } else if (err.code === 2) {
-        message = "Your location couldn't be determined. Move somewhere with a clearer view of the sky and try again. 🐾";
+        message = "Your location couldn't be determined. Move somewhere with a clearer view of the sky and try again.";
       } else if (err.code === 3) {
-        message = "Location request timed out. Move to a more open spot and try again. 🐾";
+        message = "Location request timed out. Move to a more open spot and try again.";
       }
 
       showGpsError(message);
@@ -555,7 +595,7 @@ Here's the full file with testing buttons added. They only appear when you open 
 
       const dist = distance(currentPosition, stop.coords);
       document.getElementById('status').textContent =
-        `🐾 ${Math.round(dist)} m to the next clue`;
+        `${Math.round(dist)} m to the next clue`;
 
       if (dist <= stop.radius && !stop.revealed) {
         stop.revealed = true;
@@ -623,7 +663,7 @@ Here's the full file with testing buttons added. They only appear when you open 
         document.getElementById('riddleModal').classList.add('hidden');
         showChallenge(stop);
       } else {
-        document.getElementById('answerError').textContent = 'Not quite, kitten. Try again! 🐾';
+        document.getElementById('answerError').textContent = 'Not quite. Try again.';
       }
     }
 
@@ -645,8 +685,8 @@ Here's the full file with testing buttons added. They only appear when you open 
       document.getElementById('emojiBig').textContent = stop.emoji;
       const collected = collectedEmojis();
       const text = collected.length < stops.length
-        ? `You've collected ${collected.length} of ${stops.length} emojis. Keep going, kitten!`
-        : `That's all 5! Time to guess what they spell. 🐾`;
+        ? `You've collected ${collected.length} of ${stops.length} pieces. Keep going.`
+        : `That's all five. Time to figure out what they spell.`;
       document.getElementById('emojiProgressText').textContent = text;
       document.getElementById('emojiModal').classList.remove('hidden');
     }
@@ -670,7 +710,7 @@ Here's the full file with testing buttons added. They only appear when you open 
         watchId = null;
       }
       document.getElementById('recenterBtn').style.display = 'none';
-      document.getElementById('status').textContent = '🐱 Final guess time!';
+      document.getElementById('status').textContent = 'Final puzzle';
       document.getElementById('finalEmojis').textContent = stops.map(s => s.emoji).join(' ');
       document.getElementById('finalAnswerInput').value = '';
       document.getElementById('finalAnswerError').textContent = '';
@@ -689,7 +729,7 @@ Here's the full file with testing buttons added. They only appear when you open 
         document.getElementById('finalModal').classList.remove('hidden');
       } else {
         document.getElementById('finalAnswerError').textContent =
-          'Not quite, kitten. Look at the emojis one more time. 🐾';
+          'Not quite. Look at the pieces one more time.';
       }
     }
 
@@ -719,14 +759,12 @@ Here's the full file with testing buttons added. They only appear when you open 
       saveProgress();
       updateEmojiBar();
       document.getElementById('recenterBtn').style.display = 'flex';
-      // Simulate arriving: directly show the riddle for this stop
       showStop(index);
       stops[index].revealed = true;
       showRiddle(stops[index]);
     }
 
     function debugSolveCurrent() {
-      // Instantly complete current stop and advance
       closeAllModals();
       if (isFinal || currentStopIndex >= stops.length) return;
       const finished = stops[currentStopIndex];
@@ -736,8 +774,14 @@ Here's the full file with testing buttons added. They only appear when you open 
       showEmojiReveal(finished);
     }
 
+    function debugSkipRiddle() {
+      closeAllModals();
+      if (isFinal || currentStopIndex >= stops.length) return;
+      const stop = stops[currentStopIndex];
+      showChallenge(stop);
+    }
+
     function debugSkip() {
-      // Jump straight to next stop, no emoji reveal
       closeAllModals();
       if (isFinal || currentStopIndex >= stops.length) return;
       currentStopIndex++;
@@ -753,7 +797,6 @@ Here's the full file with testing buttons added. They only appear when you open 
     }
 
     function debugEnd() {
-      // Jump straight to the final guess with all emojis collected
       closeAllModals();
       currentStopIndex = stops.length;
       isFinal = true;
@@ -773,6 +816,7 @@ Here's the full file with testing buttons added. They only appear when you open 
       document.getElementById('dbgSolve').onclick = debugSolveCurrent;
       document.getElementById('dbgSkip').onclick = debugSkip;
       document.getElementById('dbgEnd').onclick = debugEnd;
+      document.getElementById('dbgSkipRiddle').onclick = debugSkipRiddle;
       document.getElementById('dbgReset').onclick = debugReset;
       document.getElementById('dbgHide').onclick = () =>
         document.getElementById('debugPanel').style.display = 'none';
@@ -792,8 +836,8 @@ Here's the full file with testing buttons added. They only appear when you open 
         currentStopIndex = saved.currentStopIndex;
         isFinal = !!saved.isFinal;
         document.getElementById('startMessage').textContent =
-          `Welcome back, kitten. 🐈 You're on stop ${Math.min(currentStopIndex + 1, stops.length)} of ${stops.length}.`;
-        document.getElementById('startBtn').textContent = 'Start fresh 🐾';
+          `Welcome back. You're on stop ${Math.min(currentStopIndex + 1, stops.length)} of ${stops.length}.`;
+        document.getElementById('startBtn').textContent = 'Start fresh';
         document.getElementById('resumeBtn').style.display = 'block';
         document.getElementById('restartBtn').style.display = 'block';
       }
@@ -826,42 +870,22 @@ Here's the full file with testing buttons added. They only appear when you open 
 </html>
 ```
 
-🐾 How to use the debug panel
+🎯 What changed
 
-Open the URL with ?debug=1:
+· Stop 0 is now Sky Park at [48.1440, 17.1155] (Bottova 2/A)
+· Radius bumped to 45 m — Sky Park is a large complex, so a slightly bigger trigger zone helps
+· New riddle references the curved architecture, the Danube, and Zaha Hadid without naming it outright
+· Accepted answers include sky park, skypark, bottova, bottova 2a, bottova 2/a, and also zaha hadid / hadid in case she guesses the architect instead of the building
+· New challenge — photo in the little park between the curved towers
+· New hint — "The modern curved buildings near the Danube"
+· Emoji for stop 0 is still 👰 — the sequence order is unchanged
 
-```
-https://granko15.github.io/TreasureHunt/?debug=1
-```
+⚠️ One thing to verify on foot
 
-A black panel appears at the top of the map with these buttons:
+I used [48.1440, 17.1155] as an approximate center for Sky Park. Walk it once before the real day and:
 
-Button What it does
-1 2 3 4 5 Jump directly to that stop and trigger its riddle — simulates arriving there
-🏁 (appears after all 5) Jump to the final guess
-✅ Solve Instantly solve the current stop and show the emoji reveal
-⏭ Skip Skip to the next stop without the emoji reveal
-🏁 End Jump straight to the final guess with all 5 emojis collected
-👁 Hide Hide the debug panel
-👁 Show Show it again
-🔄 Reset Wipe progress and reload
+· If the trigger fires too early (while still on the main road), move the coords deeper into the complex
+· If it doesn't fire at all near the park entrance, widen radius to 60
 
-🧪 Fast test flow
-
-1. Open ?debug=1 → tap Start the hunt
-2. Tap 1 → the Blue Church riddle appears → type blue church → tap Done → tap Continue → emoji 👰 pops up
-3. Tap 2 → Čumil riddle → type cumil → ... etc.
-4. Or just hit 🏁 End to see the final screen instantly
-5. Type black veil brides → success message
-
-✅ When you're done testing
-
-Just share the URL without ?debug=1:
-
-```
-https://granko15.github.io/TreasureHunt
-```
-
-The debug panel won't exist for her. No need to remove the code — it's gated behind the ?debug=1 check.
-
-One tip: after testing, tap 🔄 Reset in the debug panel before giving it to her, so she starts fresh with no leftover progress.
+Also note: Sky Park is a bit further east than the old stop, so the walking order is now:
+Sky Park → Čumil → Hviezdoslavovo → UFO → Castle — a nice loop from the new downtown through Old Town and up to the castle. About 2 km total, 30–40 min of walking if she doesn't linger.
