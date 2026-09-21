@@ -1,6 +1,6 @@
-Got it — here's the full file with the exact coordinates for Bottova 2/A (Sky Park Offices) from the Google Maps link.
+Here's the full package. Three files: index.html, manifest.json, and sw.js. Push all three to your repo root.
 
-The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, Bottova 2A, 811 09 Bratislava). I've also increased the radius to 60 m since Sky Park is a large complex.
+📄 index.html
 
 ```html
 <!DOCTYPE html>
@@ -9,6 +9,14 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Bratislava Treasure Hunt</title>
+
+  <!-- PWA -->
+  <meta name="theme-color" content="#111111" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Hunt" />
+  <link rel="manifest" href="manifest.json" />
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     * { box-sizing: border-box; }
@@ -16,6 +24,7 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: #111;
+      -webkit-tap-highlight-color: transparent;
     }
     #map { position: absolute; inset: 0; z-index: 1; }
     #status {
@@ -71,6 +80,42 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
       justify-content: center;
     }
     #recenterBtn:active { transform: scale(0.94); }
+
+    /* ---------- PIXEL CAT WIDGET ---------- */
+    #catWidget {
+      position: absolute;
+      bottom: 84px;
+      left: 16px;
+      z-index: 500;
+      background: rgba(20,20,20,0.92);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      padding: 10px 12px 8px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      min-width: 88px;
+      transition: border-color 0.3s;
+    }
+    #catWidget.visible { display: flex; }
+    #catSvg {
+      --cat-fur: #FFB74D;
+      display: block;
+      image-rendering: pixelated;
+    }
+    #catSvg .cat-fur { fill: var(--cat-fur); transition: fill 0.4s; }
+    #catLabel {
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-top: 6px;
+      text-align: center;
+      white-space: nowrap;
+      opacity: 0.9;
+    }
 
     #debugPanel {
       position: absolute;
@@ -257,6 +302,52 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
   <div id="status">Ready to begin?</div>
   <button id="recenterBtn" title="Recenter">◎</button>
 
+  <!-- PIXEL CAT WIDGET -->
+  <div id="catWidget">
+    <svg id="catSvg" viewBox="0 0 16 16" width="56" height="56" shape-rendering="crispEdges">
+      <g id="catSnow" style="display:none">
+        <rect x="0" y="1" width="1" height="1" fill="#BBDEFB"/>
+        <rect x="15" y="2" width="1" height="1" fill="#BBDEFB"/>
+        <rect x="0" y="13" width="1" height="1" fill="#BBDEFB"/>
+        <rect x="15" y="14" width="1" height="1" fill="#BBDEFB"/>
+        <rect x="7" y="15" width="1" height="1" fill="#BBDEFB"/>
+      </g>
+      <g id="catSweat" style="display:none">
+        <rect x="0" y="5" width="1" height="2" fill="#64B5F6"/>
+        <rect x="15" y="5" width="1" height="2" fill="#64B5F6"/>
+        <rect x="0" y="10" width="1" height="2" fill="#64B5F6"/>
+        <rect x="15" y="10" width="1" height="2" fill="#64B5F6"/>
+      </g>
+      <g id="catHearts" style="display:none">
+        <rect x="0" y="3" width="1" height="1" fill="#E91E63"/>
+        <rect x="15" y="3" width="1" height="1" fill="#E91E63"/>
+        <rect x="0" y="12" width="1" height="1" fill="#E91E63"/>
+        <rect x="15" y="12" width="1" height="1" fill="#E91E63"/>
+      </g>
+      <!-- Left ear -->
+      <rect x="2" y="0" width="2" height="1" class="cat-fur"/>
+      <rect x="1" y="1" width="3" height="1" class="cat-fur"/>
+      <rect x="1" y="2" width="3" height="1" class="cat-fur"/>
+      <!-- Right ear -->
+      <rect x="12" y="0" width="2" height="1" class="cat-fur"/>
+      <rect x="12" y="1" width="3" height="1" class="cat-fur"/>
+      <rect x="12" y="2" width="3" height="1" class="cat-fur"/>
+      <!-- Head -->
+      <rect x="1" y="3" width="14" height="11" class="cat-fur"/>
+      <!-- Eyes -->
+      <rect x="4" y="6" width="2" height="2" fill="#000"/>
+      <rect x="10" y="6" width="2" height="2" fill="#000"/>
+      <rect x="4" y="6" width="1" height="1" fill="#fff"/>
+      <rect x="10" y="6" width="1" height="1" fill="#fff"/>
+      <!-- Nose -->
+      <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+      <!-- Mouth -->
+      <rect x="6" y="10" width="1" height="1" fill="#000"/>
+      <rect x="9" y="10" width="1" height="1" fill="#000"/>
+    </svg>
+    <div id="catLabel">locating…</div>
+  </div>
+
   <div id="debugPanel">
     <h3>Debug Panel</h3>
     <div class="debugGrid" id="debugStopGrid"></div>
@@ -344,10 +435,6 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    // ============================================================
-    // 1. STOPS — STOP 0 IS NOW BOTTOVA 2/A (SKY PARK OFFICES)
-    //    Verified coords: 48.1438, 17.1257
-    // ============================================================
     const stops = [
       {
         id: 0,
@@ -406,23 +493,13 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
       }
     ];
 
-    // ============================================================
-    // 2. FINAL PUZZLE CONFIG
-    // ============================================================
     const finalPuzzle = {
-      answers: [
-        "black veil brides",
-        "blackveilbrides",
-        "bvb"
-      ],
+      answers: ["black veil brides", "blackveilbrides", "bvb"],
       successTitle: "You got it",
       successMessage: "Black Veil Brides. 🤘\n\nYou found the greatest treasure of all: us. I love you.\n\nNow let's go celebrate. 🖤"
     };
 
-    // ============================================================
-    // 3. APP STATE + PERSISTENCE
-    // ============================================================
-    const STORAGE_KEY = 'catHunt_progress_v5';
+    const STORAGE_KEY = 'catHunt_progress_v6';
 
     let currentStopIndex = 0;
     let isFinal = false;
@@ -433,101 +510,98 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
     const DEBUG = new URLSearchParams(location.search).has('debug');
 
     function saveProgress() {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          currentStopIndex,
-          isFinal
-        }));
-      } catch (e) {}
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ currentStopIndex, isFinal })); } catch (e) {}
     }
-
     function loadProgress() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : null;
-      } catch (e) { return null; }
+      try { const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
     }
+    function clearProgress() { try { localStorage.removeItem(STORAGE_KEY); } catch (e) {} }
 
-    function clearProgress() {
-      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
-    }
-
-    function collectedEmojis() {
-      return stops.slice(0, currentStopIndex).map(s => s.emoji);
-    }
+    function collectedEmojis() { return stops.slice(0, currentStopIndex).map(s => s.emoji); }
 
     function updateEmojiBar() {
       const bar = document.getElementById('emojiBar');
       const collected = collectedEmojis();
-      if (collected.length === 0) {
-        bar.style.display = 'none';
-        return;
-      }
+      if (collected.length === 0) { bar.style.display = 'none'; return; }
       bar.style.display = 'flex';
       bar.textContent = collected.join(' ');
     }
 
-    function updateDebugStopGrid() {
-      const grid = document.getElementById('debugStopGrid');
-      if (!grid) return;
-      grid.innerHTML = '';
-      stops.forEach((s, i) => {
-        const b = document.createElement('button');
-        b.textContent = `${i + 1}`;
-        if (i === currentStopIndex && !isFinal) b.classList.add('active');
-        b.onclick = () => debugJumpToStop(i);
-        grid.appendChild(b);
-      });
-      if (isFinal) {
-        const b = document.createElement('button');
-        b.textContent = '✓';
-        b.classList.add('active');
-        b.onclick = () => { closeAllModals(); showFinalGuess(); };
-        grid.appendChild(b);
-      }
+    // ---------- PIXEL CAT ----------
+    const CAT_FUR = {
+      freezing: '#64B5F6',
+      cold:     '#90CAF9',
+      warm:     '#FFB74D',
+      hot:      '#FF7043',
+      sweating: '#F44336',
+      unknown:  '#9E9E9E',
+      finished: '#E91E63'
+    };
+    const CAT_LABELS = {
+      freezing: 'freezing ❄️',
+      cold:     'cold',
+      warm:     'warm',
+      hot:      'hot 🥵',
+      sweating: 'on fire 🔥',
+      unknown:  'locating…',
+      finished: 'found 💕'
+    };
+
+    function catStateFor(dist) {
+      if (isFinal) return 'finished';
+      if (dist == null) return 'unknown';
+      if (dist > 400) return 'freezing';
+      if (dist > 200) return 'cold';
+      if (dist > 80)  return 'warm';
+      if (dist > 30)  return 'hot';
+      return 'sweating';
     }
 
-    // ============================================================
-    // 4. MAP + GEOLOCATION
-    // ============================================================
+    function updateCat(dist) {
+      const state = catStateFor(dist);
+      const svg = document.getElementById('catSvg');
+      svg.style.setProperty('--cat-fur', CAT_FUR[state]);
+      document.getElementById('catLabel').textContent = CAT_LABELS[state];
+      document.getElementById('catSnow').style.display =
+        (state === 'freezing' || state === 'cold') ? 'block' : 'none';
+      document.getElementById('catSweat').style.display =
+        (state === 'hot' || state === 'sweating') ? 'block' : 'none';
+      document.getElementById('catHearts').style.display =
+        (state === 'finished') ? 'block' : 'none';
+    }
+
+    // ---------- MAP ----------
     function initMap() {
       map = L.map('map').setView([48.143, 17.108], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap'
+        maxZoom: 19, attribution: '© OpenStreetMap'
       }).addTo(map);
     }
 
     function startHunt(resume) {
       document.getElementById('startScreen').classList.add('hidden');
       document.getElementById('recenterBtn').style.display = 'flex';
+      document.getElementById('catWidget').classList.add('visible');
 
       if (!navigator.geolocation) {
         showGpsError('This browser does not support location. Try Safari or Chrome.');
         return;
       }
-
       if (!resume) {
         currentStopIndex = 0;
         isFinal = false;
         stops.forEach(s => s.revealed = false);
         clearProgress();
       }
-
       updateEmojiBar();
       updateDebugStopGrid();
+      updateCat(null);
 
       watchId = navigator.geolocation.watchPosition(onPosition, onError, {
-        enableHighAccuracy: true,
-        maximumAge: 10000,
-        timeout: 15000
+        enableHighAccuracy: true, maximumAge: 10000, timeout: 15000
       });
 
-      if (isFinal) {
-        showFinalGuess();
-      } else {
-        showStop(currentStopIndex);
-      }
+      if (isFinal) { showFinalGuess(); } else { showStop(currentStopIndex); }
     }
 
     function onPosition(pos) {
@@ -556,7 +630,6 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
     function onError(err) {
       console.warn(err);
       let message = "We need your location to start the hunt. ";
-
       if (err.code === 1) {
         message = "Location access is blocked. Here's how to fix it:\n\n" +
           "iPhone:\n" +
@@ -571,7 +644,6 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
       } else if (err.code === 3) {
         message = "Location request timed out. Move to a more open spot and try again.";
       }
-
       showGpsError(message);
     }
 
@@ -581,13 +653,13 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
     }
 
     function checkProximity() {
-      if (isFinal || currentStopIndex >= stops.length) return;
+      if (isFinal || currentStopIndex >= stops.length) { updateCat(0); return; }
       const stop = stops[currentStopIndex];
-      if (!currentPosition) return;
+      if (!currentPosition) { updateCat(null); return; }
 
       const dist = distance(currentPosition, stop.coords);
-      document.getElementById('status').textContent =
-        `${Math.round(dist)} m to the next clue`;
+      document.getElementById('status').textContent = `${Math.round(dist)} m to the next clue`;
+      updateCat(dist);
 
       if (dist <= stop.radius && !stop.revealed) {
         stop.revealed = true;
@@ -605,9 +677,6 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
       return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    // ============================================================
-    // 5. UI FLOW
-    // ============================================================
     function closeAllModals() {
       ['startScreen','riddleModal','challengeModal','emojiModal',
        'finalGuessModal','finalModal','gpsErrorModal'].forEach(id => {
@@ -685,7 +754,6 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
 
     function continueAfterEmoji() {
       document.getElementById('emojiModal').classList.add('hidden');
-
       if (currentStopIndex >= stops.length) {
         isFinal = true;
         saveProgress();
@@ -697,10 +765,7 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
     }
 
     function showFinalGuess() {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-        watchId = null;
-      }
+      if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
       document.getElementById('recenterBtn').style.display = 'none';
       document.getElementById('status').textContent = 'Final puzzle';
       document.getElementById('finalEmojis').textContent = stops.map(s => s.emoji).join(' ');
@@ -708,6 +773,7 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
       document.getElementById('finalAnswerError').textContent = '';
       document.getElementById('finalGuessModal').classList.remove('hidden');
       document.getElementById('emojiBar').style.display = 'none';
+      updateCat(0);
       updateDebugStopGrid();
     }
 
@@ -719,6 +785,7 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
         document.getElementById('finalTitle').textContent = finalPuzzle.successTitle;
         document.getElementById('finalMessage').textContent = finalPuzzle.successMessage;
         document.getElementById('finalModal').classList.remove('hidden');
+        document.getElementById('catWidget').style.display = 'none';
       } else {
         document.getElementById('finalAnswerError').textContent =
           'Not quite. Look at the pieces one more time.';
@@ -726,81 +793,74 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
     }
 
     function normalize(str) {
-      return str
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]/g, '');
+      return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, '');
     }
 
     function showHint() {
       const stop = stops[currentStopIndex];
-      if (stop && stop.hint) {
-        document.getElementById('answerError').textContent = 'Hint: ' + stop.hint;
+      if (stop && stop.hint) document.getElementById('answerError').textContent = 'Hint: ' + stop.hint;
+    }
+
+    function updateDebugStopGrid() {
+      const grid = document.getElementById('debugStopGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      stops.forEach((s, i) => {
+        const b = document.createElement('button');
+        b.textContent = `${i + 1}`;
+        if (i === currentStopIndex && !isFinal) b.classList.add('active');
+        b.onclick = () => debugJumpToStop(i);
+        grid.appendChild(b);
+      });
+      if (isFinal) {
+        const b = document.createElement('button');
+        b.textContent = '✓';
+        b.classList.add('active');
+        b.onclick = () => { closeAllModals(); showFinalGuess(); };
+        grid.appendChild(b);
       }
     }
 
-    // ============================================================
-    // 6. DEBUG HELPERS
-    // ============================================================
     function debugJumpToStop(index) {
       closeAllModals();
       currentStopIndex = index;
       isFinal = false;
       stops.forEach((s, i) => { s.revealed = (i < index); });
-      saveProgress();
-      updateEmojiBar();
+      saveProgress(); updateEmojiBar();
       document.getElementById('recenterBtn').style.display = 'flex';
       showStop(index);
       stops[index].revealed = true;
       showRiddle(stops[index]);
     }
-
     function debugSolveCurrent() {
       closeAllModals();
       if (isFinal || currentStopIndex >= stops.length) return;
       const finished = stops[currentStopIndex];
       currentStopIndex++;
-      saveProgress();
-      updateEmojiBar();
+      saveProgress(); updateEmojiBar();
       showEmojiReveal(finished);
     }
-
     function debugSkipRiddle() {
       closeAllModals();
       if (isFinal || currentStopIndex >= stops.length) return;
-      const stop = stops[currentStopIndex];
-      showChallenge(stop);
+      showChallenge(stops[currentStopIndex]);
     }
-
     function debugSkip() {
       closeAllModals();
       if (isFinal || currentStopIndex >= stops.length) return;
       currentStopIndex++;
-      saveProgress();
-      updateEmojiBar();
-      if (currentStopIndex >= stops.length) {
-        isFinal = true;
-        saveProgress();
-        showFinalGuess();
-      } else {
-        showStop(currentStopIndex);
-      }
+      saveProgress(); updateEmojiBar();
+      if (currentStopIndex >= stops.length) { isFinal = true; saveProgress(); showFinalGuess(); }
+      else { showStop(currentStopIndex); }
     }
-
     function debugEnd() {
       closeAllModals();
       currentStopIndex = stops.length;
       isFinal = true;
-      saveProgress();
-      updateEmojiBar();
+      saveProgress(); updateEmojiBar();
       showFinalGuess();
     }
-
-    function debugReset() {
-      clearProgress();
-      location.reload();
-    }
+    function debugReset() { clearProgress(); location.reload(); }
 
     function initDebugPanel() {
       if (!DEBUG) return;
@@ -810,16 +870,18 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
       document.getElementById('dbgEnd').onclick = debugEnd;
       document.getElementById('dbgSkipRiddle').onclick = debugSkipRiddle;
       document.getElementById('dbgReset').onclick = debugReset;
-      document.getElementById('dbgHide').onclick = () =>
-        document.getElementById('debugPanel').style.display = 'none';
-      document.getElementById('dbgShow').onclick = () =>
-        document.getElementById('debugPanel').style.display = 'block';
+      document.getElementById('dbgHide').onclick = () => document.getElementById('debugPanel').style.display = 'none';
+      document.getElementById('dbgShow').onclick = () => document.getElementById('debugPanel').style.display = 'block';
       updateDebugStopGrid();
     }
 
-    // ============================================================
-    // 7. INIT
-    // ============================================================
+    // ---------- SERVICE WORKER ----------
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+
     window.addEventListener('load', () => {
       initMap();
 
@@ -862,21 +924,75 @@ The verified coordinates for Bottova 2A are 48.1438, 17.1257 (Sky Park Offices, 
 </html>
 ```
 
-🎯 What changed
+📄 manifest.json
 
-· Stop 0 coordinates: Now [48.1438, 17.1257] — verified location for Bottova 2A / Sky Park Offices
-· Radius: Bumped to 60 m since Sky Park is a large complex with multiple entrances
-· Riddle: Updated to mention Bottova 2/A explicitly
-· Accepted answers: Now includes bottova 2 a, bottova 2/a, bottova 2a, sky park offices
-· Storage key: Bumped to v5 so old test data doesn't interfere
-· Status text: Removed the 🐾 paw to keep the cleaner look
+```json
+{
+  "name": "Bratislava Treasure Hunt",
+  "short_name": "Hunt",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'><rect width='16' height='16' fill='%23111'/><rect x='2' y='0' width='2' height='1' fill='%23FFB74D'/><rect x='1' y='1' width='3' height='1' fill='%23FFB74D'/><rect x='1' y='2' width='3' height='1' fill='%23FFB74D'/><rect x='12' y='0' width='2' height='1' fill='%23FFB74D'/><rect x='12' y='1' width='3' height='1' fill='%23FFB74D'/><rect x='12' y='2' width='3' height='1' fill='%23FFB74D'/><rect x='1' y='3' width='14' height='11' fill='%23FFB74D'/><rect x='4' y='6' width='2' height='2' fill='%23000'/><rect x='10' y='6' width='2' height='2' fill='%23000'/><rect x='4' y='6' width='1' height='1' fill='%23fff'/><rect x='10' y='6' width='1' height='1' fill='%23fff'/><rect x='7' y='9' width='2' height='1' fill='%23F48FB1'/><rect x='6' y='10' width='1' height='1' fill='%23000'/><rect x='9' y='10' width='1' height='1' fill='%23000'/></svg>",
+      "sizes": "192x192 512x512 any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+```
 
-⚠️ One thing to verify on foot
+📄 sw.js
 
-The coordinates 48.1438, 17.1257 are for the Sky Park Offices building at Bottova 2A. Walk there once before the real day and check:
+```js
+const CACHE = 'hunt-v1';
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    fetch(e.request).then(r => {
+      const copy = r.clone();
+      caches.open(CACHE).then(c => c.put(e.request, copy));
+      return r;
+    }).catch(() => caches.match(e.request))
+  );
+});
+```
 
-· Does the riddle trigger while standing in front of the building?
-· If it fires too early (while still on the main road), move the coords deeper into the complex
-· If it doesn't fire at all near the entrance, widen radius to 80
+---
 
-The walking order is now: Bottova 2/A → Čumil → Hviezdoslavovo → UFO → Castle — roughly 2 km total, 30–40 min of walking.
+🐱 How the cat works
+
+The pixel cat lives bottom-left. Its fur color and expression change based on distance to the current stop:
+
+Distance Fur color Overlays Label
+> 400 m blue ❄️ snowflakes freezing ❄️
+200–400 m light blue — cold
+80–200 m orange — warm
+30–80 m deep orange 💧 sweat drops hot 🥵
+< 30 m red 💧 sweat drops on fire 🔥
+After finish pink 💕 hearts found 💕
+
+The cat updates every GPS tick, so she'll see it heat up as she walks toward each stop. It's a nice little reassurance that she's heading the right way.
+
+📲 How to deploy the PWA
+
+1. Push all three files to your repo root: index.html, manifest.json, sw.js
+2. Wait ~1 minute for GitHub Pages to redeploy
+3. On her phone, open https://granko15.github.io/TreasureHunt in Safari
+4. Tap the Share button → Add to Home Screen
+5. A "Hunt" icon appears on her home screen — tapping it launches fullscreen, no browser chrome
+
+Note on iOS icons: iOS doesn't render SVG icons on the home screen, so it'll use a screenshot as the icon. If you want a proper icon, create a 192×192 PNG, save it as icon-192.png in the repo, and I'll update the manifest to reference it. Want me to do that?
+
+🧪 Testing
+
+· With debug: https://granko15.github.io/TreasureHunt/?debug=1
+· Tap End to see the finished-cat state, or use Skip Riddle on any stop to see the hot/sweating cat as you get close
+
+The cat is purely visual — it doesn't affect gameplay, doesn't count as a "piece," and doesn't block anything if she ignores it.
