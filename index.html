@@ -1,6 +1,4 @@
-Here's the full package. Three files: index.html, manifest.json, and sw.js. Push all three to your repo root.
-
-📄 index.html
+Good call — keeping it as a Safari bookmark is simpler and avoids all the PWA quirks (stale cache, home-screen viewport issues, no share sheet, etc.). Here's the clean index.html with the PWA bits removed. Everything else stays: pixel cat, debug panel, all stops.
 
 ```html
 <!DOCTYPE html>
@@ -8,15 +6,8 @@ Here's the full package. Three files: index.html, manifest.json, and sw.js. Push
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Bratislava Treasure Hunt</title>
-
-  <!-- PWA -->
   <meta name="theme-color" content="#111111" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Hunt" />
-  <link rel="manifest" href="manifest.json" />
-
+  <title>Bratislava Treasure Hunt</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     * { box-sizing: border-box; }
@@ -324,24 +315,18 @@ Here's the full package. Three files: index.html, manifest.json, and sw.js. Push
         <rect x="0" y="12" width="1" height="1" fill="#E91E63"/>
         <rect x="15" y="12" width="1" height="1" fill="#E91E63"/>
       </g>
-      <!-- Left ear -->
       <rect x="2" y="0" width="2" height="1" class="cat-fur"/>
       <rect x="1" y="1" width="3" height="1" class="cat-fur"/>
       <rect x="1" y="2" width="3" height="1" class="cat-fur"/>
-      <!-- Right ear -->
       <rect x="12" y="0" width="2" height="1" class="cat-fur"/>
       <rect x="12" y="1" width="3" height="1" class="cat-fur"/>
       <rect x="12" y="2" width="3" height="1" class="cat-fur"/>
-      <!-- Head -->
       <rect x="1" y="3" width="14" height="11" class="cat-fur"/>
-      <!-- Eyes -->
       <rect x="4" y="6" width="2" height="2" fill="#000"/>
       <rect x="10" y="6" width="2" height="2" fill="#000"/>
       <rect x="4" y="6" width="1" height="1" fill="#fff"/>
       <rect x="10" y="6" width="1" height="1" fill="#fff"/>
-      <!-- Nose -->
       <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
-      <!-- Mouth -->
       <rect x="6" y="10" width="1" height="1" fill="#000"/>
       <rect x="9" y="10" width="1" height="1" fill="#000"/>
     </svg>
@@ -499,7 +484,7 @@ Here's the full package. Three files: index.html, manifest.json, and sw.js. Push
       successMessage: "Black Veil Brides. 🤘\n\nYou found the greatest treasure of all: us. I love you.\n\nNow let's go celebrate. 🖤"
     };
 
-    const STORAGE_KEY = 'catHunt_progress_v6';
+    const STORAGE_KEY = 'catHunt_progress_v7';
 
     let currentStopIndex = 0;
     let isFinal = false;
@@ -527,7 +512,6 @@ Here's the full package. Three files: index.html, manifest.json, and sw.js. Push
       bar.textContent = collected.join(' ');
     }
 
-    // ---------- PIXEL CAT ----------
     const CAT_FUR = {
       freezing: '#64B5F6',
       cold:     '#90CAF9',
@@ -570,7 +554,6 @@ Here's the full package. Three files: index.html, manifest.json, and sw.js. Push
         (state === 'finished') ? 'block' : 'none';
     }
 
-    // ---------- MAP ----------
     function initMap() {
       map = L.map('map').setView([48.143, 17.108], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -875,20 +858,13 @@ Here's the full package. Three files: index.html, manifest.json, and sw.js. Push
       updateDebugStopGrid();
     }
 
-    // ---------- SERVICE WORKER ----------
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
-      });
-    }
-
     window.addEventListener('load', () => {
       initMap();
 
       const saved = loadProgress();
-      if (saved && (saved.currentStopIndex > 0 || saved.isFinal)) {
+      if (saved && saved.currentStopIndex > 0 && !saved.isFinal) {
         currentStopIndex = saved.currentStopIndex;
-        isFinal = !!saved.isFinal;
+        isFinal = false;
         document.getElementById('startMessage').textContent =
           `Welcome back. You're on stop ${Math.min(currentStopIndex + 1, stops.length)} of ${stops.length}.`;
         document.getElementById('startBtn').textContent = 'Start fresh';
@@ -924,75 +900,30 @@ Here's the full package. Three files: index.html, manifest.json, and sw.js. Push
 </html>
 ```
 
-📄 manifest.json
+🗑️ What to clean up in your repo
 
-```json
-{
-  "name": "Bratislava Treasure Hunt",
-  "short_name": "Hunt",
-  "start_url": "./",
-  "scope": "./",
-  "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#111111",
-  "theme_color": "#111111",
-  "icons": [
-    {
-      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'><rect width='16' height='16' fill='%23111'/><rect x='2' y='0' width='2' height='1' fill='%23FFB74D'/><rect x='1' y='1' width='3' height='1' fill='%23FFB74D'/><rect x='1' y='2' width='3' height='1' fill='%23FFB74D'/><rect x='12' y='0' width='2' height='1' fill='%23FFB74D'/><rect x='12' y='1' width='3' height='1' fill='%23FFB74D'/><rect x='12' y='2' width='3' height='1' fill='%23FFB74D'/><rect x='1' y='3' width='14' height='11' fill='%23FFB74D'/><rect x='4' y='6' width='2' height='2' fill='%23000'/><rect x='10' y='6' width='2' height='2' fill='%23000'/><rect x='4' y='6' width='1' height='1' fill='%23fff'/><rect x='10' y='6' width='1' height='1' fill='%23fff'/><rect x='7' y='9' width='2' height='1' fill='%23F48FB1'/><rect x='6' y='10' width='1' height='1' fill='%23000'/><rect x='9' y='10' width='1' height='1' fill='%23000'/></svg>",
-      "sizes": "192x192 512x512 any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ]
-}
-```
+Delete these two files (they're no longer referenced):
 
-📄 sw.js
+· manifest.json
+· sw.js
 
-```js
-const CACHE = 'hunt-v1';
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-self.addEventListener('fetch', e => {
-  e.respondWith(
-    fetch(e.request).then(r => {
-      const copy = r.clone();
-      caches.open(CACHE).then(c => c.put(e.request, copy));
-      return r;
-    }).catch(() => caches.match(e.request))
-  );
-});
-```
+Or just leave them — they won't be loaded since index.html no longer links them. Deleting keeps the repo clean.
 
----
+📲 How to share it with her
 
-🐱 How the cat works
+Simplest and most reliable:
 
-The pixel cat lives bottom-left. Its fur color and expression change based on distance to the current stop:
+1. Send her the plain URL:
+   https://granko15.github.io/TreasureHunt
+2. Tell her to open it in Safari (not a chat webview)
+3. She can bookmark it or keep it as a tab — that's it
 
-Distance Fur color Overlays Label
-> 400 m blue ❄️ snowflakes freezing ❄️
-200–400 m light blue — cold
-80–200 m orange — warm
-30–80 m deep orange 💧 sweat drops hot 🥵
-< 30 m red 💧 sweat drops on fire 🔥
-After finish pink 💕 hearts found 💕
+No home screen icon, no install prompt, no cache weirdness. Works exactly like it does for you in the browser right now.
 
-The cat updates every GPS tick, so she'll see it heat up as she walks toward each stop. It's a nice little reassurance that she's heading the right way.
+🧪 Before the real day
 
-📲 How to deploy the PWA
+· Reset progress via ?debug=1 → Reset button so she starts clean
+· Test the pixel cat by walking around — it should shift colors as you approach each stop
+· If any of the distances feel off in the city, tell me the actual meters and I'll retune the thresholds
 
-1. Push all three files to your repo root: index.html, manifest.json, sw.js
-2. Wait ~1 minute for GitHub Pages to redeploy
-3. On her phone, open https://granko15.github.io/TreasureHunt in Safari
-4. Tap the Share button → Add to Home Screen
-5. A "Hunt" icon appears on her home screen — tapping it launches fullscreen, no browser chrome
-
-Note on iOS icons: iOS doesn't render SVG icons on the home screen, so it'll use a screenshot as the icon. If you want a proper icon, create a 192×192 PNG, save it as icon-192.png in the repo, and I'll update the manifest to reference it. Want me to do that?
-
-🧪 Testing
-
-· With debug: https://granko15.github.io/TreasureHunt/?debug=1
-· Tap End to see the finished-cat state, or use Skip Riddle on any stop to see the hot/sweating cat as you get close
-
-The cat is purely visual — it doesn't affect gameplay, doesn't count as a "piece," and doesn't block anything if she ignores it.
+Anything else you want to add before this goes live?
