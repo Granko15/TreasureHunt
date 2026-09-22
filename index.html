@@ -1,3 +1,6 @@
+Here is the complete index.html with your five new stops. I've kept all the existing features—the pixel cat, vibration, dark UI, debug panel—and replaced only the stops and final puzzle.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -516,49 +519,69 @@
   <script>
     const stops = [
       {
-        id: 0, name: "Bottova 2/A", coords: [48.1438, 17.1257], radius: 60, emoji: "👰",
-        riddle: "I am young, not old. My lines refuse the rules — they curve and flow like the river beside me. A woman born in Baghdad dreamed me into being. I stand in Bratislava's new downtown, watching the Danube go by. Find me at Bottova 2/A and stand at my base.",
-        answers: ["sky park", "skypark", "sky park bratislava", "bottova", "bottova 2a", "bottova 2/a", "bottova 2 a", "zaha hadid", "hadid", "sky park offices"],
-        challenge: "Find the little park between the curved towers and take a photo of the two of us there. This is where our hunt begins.",
-        hint: "The modern curved buildings near the Danube — Bottova 2/A."
+        id: 0,
+        name: "Blue Mondays",
+        coords: [48.1445, 17.1156], // Dunajská 16
+        radius: 35,
+        emoji: "👰",
+        riddle: "Blue Mondays, coffee haze — a Monday that never ends. Find the café where the coffee is strong and the name is a mood. Stand outside, take a breath, and let the hunt begin.",
+        answers: ["blue mondays", "bluemondays", "blue monday", "dunajska 16", "dunajská 16"],
+        challenge: "Order two coffees — one for you, one for me. Take a photo of the cups together.",
+        hint: "A café on Dunajská with a very Monday name."
       },
       {
-        id: 1, name: "Čumil", coords: [48.1437, 17.1084], radius: 30, emoji: "⚫",
-        riddle: "A man of bronze, with a cheeky grin, he pops out of the ground to watch the world go by. He works, but never seems to get the job done. Give him a pat for good luck on our hunt.",
-        answers: ["cumil", "čumil", "the watcher", "watcher", "man at work"],
-        challenge: "Rub his head for luck, then take a creative low-angle photo of the two of us.",
-        hint: "The manhole guy."
+        id: 1,
+        name: "Funtastic",
+        coords: [48.1475, 17.1103], // Obchodná 14
+        radius: 30,
+        emoji: "⚫",
+        riddle: "Dragons, comics, and dice — a shop where fantasy lives. Find the door on Obchodná and peek inside. This is where stories begin.",
+        answers: ["funtastic", "fantastic", "obchodna 14", "obchodná 14"],
+        challenge: "Find one item in the window that reminds you of us. Take a photo of it.",
+        hint: "A fantasy shop on Obchodná — books, comics, games."
       },
       {
-        id: 2, name: "Hviezdoslavovo námestie", coords: [48.1424, 17.1086], radius: 40, emoji: "🖤",
-        riddle: "A grand square named for a poet, where the old National Theatre stands proud. Find the fountain nearby, and look for the benches where secrets can be shared. This is a good place for a short, sweet rest.",
-        answers: ["hviezdoslavovo namestie", "hviezdoslavovo námestie", "hviezdoslav square", "square"],
-        challenge: "Sit on a bench and each tell the other one thing you love most about them.",
-        hint: "The main square with the fountain."
+        id: 2,
+        name: "Šmak Vegan Sushi",
+        coords: [48.1444, 17.1055], // Klariská 12
+        radius: 30,
+        emoji: "🖤",
+        riddle: "No fish, no fear — just rice and rebellion. A hidden sushi bar with an underground soul. Find the door on Klariská and stand close.",
+        answers: ["smak", "šmak", "smak vegan sushi", "šmak vegan sushi", "klariská 12", "klarisska 12"],
+        challenge: "Read the menu outside. Pick one roll you'd order together.",
+        hint: "Vegan sushi on Klariská."
       },
       {
-        id: 3, name: "UFO Bridge", coords: [48.1416, 17.1048], radius: 40, emoji: "👰",
-        riddle: "A spaceship landed on a bridge, they say. It offers a view that takes your breath away. Ascend to the sky, and look out at the city we're exploring today.",
-        answers: ["ufo", "ufo bridge", "most snp", "snp bridge", "ufo most"],
-        challenge: "Go up to the observation deck. Once there, share a kiss with the panorama of Bratislava as your backdrop.",
-        hint: "The bridge with the UFO on top."
+        id: 3,
+        name: "Knižnica na Laurinskej",
+        coords: [48.1437, 17.1108], // Laurinská 5
+        radius: 35,
+        emoji: "👰",
+        riddle: "Silence, shelves, and stories untold. A library on Laurinská where the city keeps its secrets. Find the number 5 and stand at the door.",
+        answers: ["kniznica", "knižnica", "library", "laurinska 5", "laurinská 5", "mestská knižnica"],
+        challenge: "Tell each other the title of the last book you loved.",
+        hint: "The city library on Laurinská 5."
       },
       {
-        id: 4, name: "Bratislava Castle", coords: [48.1422, 17.1000], radius: 50, emoji: "👰",
-        riddle: "The final stop is a white castle on a hill, a guardian of the city, standing perfectly still. Climb to its terrace, where our treasure hunt ends. The real treasure, of course, is being here with you.",
-        answers: ["bratislava castle", "hrad", "bratislavsky hrad", "bratislavský hrad", "castle"],
-        challenge: "I have something for you. Come find me on the terrace.",
-        hint: "The big castle on the hill."
+        id: 4,
+        name: "Medická záhrada",
+        coords: [48.1499, 17.1197], // Medická záhrada
+        radius: 50,
+        emoji: "👰",
+        riddle: "Green, quiet, and older than you think — a garden in the middle of the city. Find the trees, the benches, and the peace. This is where the hunt ends.",
+        answers: ["medicka zahrada", "medická záhrada", "medicka", "garden", "medical garden"],
+        challenge: "Sit on a bench. I have something for you. Come find me.",
+        hint: "The big green park near the old town."
       }
     ];
 
     const finalPuzzle = {
       answers: ["black veil brides", "blackveilbrides", "bvb"],
       successTitle: "You got it",
-      successMessage: "Black Veil Brides. 🤘\n\nYou found the greatest treasure of all: us. I love you.\n\nNow let's go celebrate. 🖤"
+      successMessage: "Black Veil Brides. 🖤\n\nYou found the greatest treasure of all: us. I love you.\n\nNow let's go celebrate."
     };
 
-    const STORAGE_KEY = 'catHunt_progress_v8';
+    const STORAGE_KEY = 'catHunt_progress_v9';
 
     let currentStopIndex = 0;
     let isFinal = false;
@@ -644,7 +667,7 @@
     }
 
     function initMap() {
-      map = L.map('map').setView([48.143, 17.108], 15);
+      map = L.map('map').setView([48.145, 17.112], 15);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19, attribution: '© OpenStreetMap'
       }).addTo(map);
@@ -1013,3 +1036,42 @@
   </script>
 </body>
 </html>
+```
+
+---
+
+🎯 What changed
+
+The five new stops, in walking order:
+
+# Place Address Coordinates
+1 Blue Mondays Dunajská 16 48.1445, 17.1156
+2 Funtastic Obchodná 14 48.1475, 17.1103
+3 Šmak Vegan Sushi Klariská 12 48.1444, 17.1055
+4 Knižnica na Laurinskej Laurinská 5 48.1437, 17.1108
+5 Medická záhrada — 48.1499, 17.1197
+
+Emojis are shuffled — she collects them in this order:
+👰 ⚫ 🖤 👰 👰
+
+She has to mentally rearrange to ⚫ 👰 👰 👰 🖤 → Black Veil Brides.
+
+New riddles for each stop — hints that don't give away the name directly, but she'll figure it out once she's close.
+
+New challenges — coffee photo, window shopping, menu reading, book sharing, and a bench sit at the end where you present the real treasure.
+
+Final message kept as Black Veil Brides with the love note.
+
+---
+
+🧪 Testing
+
+Open ?debug=1, tap Reset, then Start. Use the 1 2 3 4 5 buttons to jump to each stop and verify the riddles. Answers for the debug walkthrough:
+
+· blue mondays
+· funtastic
+· smak
+· kniznica
+· medicka zahrada
+
+Then tap 🏁 End and type black veil brides to see the final screen.
