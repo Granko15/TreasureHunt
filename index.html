@@ -430,7 +430,7 @@
             <rect x="6" y="13" width="4" height="1" fill="#F48FB1"/>
           </g>
         </svg>
-        <div class="catName">Hubík</div>
+        <div class="catName">Hubinko</div>
       </div>
       <div class="catSlot">
         <svg class="cat cat-nabinka" viewBox="0 0 16 16" width="48" height="48" shape-rendering="crispEdges">
@@ -599,7 +599,7 @@
               <rect x="6" y="13" width="4" height="1" fill="#F48FB1"/>
             </g>
           </svg>
-          <div class="catName">Hubík</div>
+          <div class="catName">Hubinko</div>
         </div>
         <div class="catSlot">
           <svg class="cat cat-nabinka cat-in-modal" viewBox="0 0 16 16" shape-rendering="crispEdges">
@@ -672,14 +672,6 @@
     </div>
   </div>
 
-  <div id="challengeModal" class="overlay hidden">
-    <div class="card">
-      <h2>Úloha</h2>
-      <p id="challengeText"></p>
-      <button id="completeChallengeBtn">Hotovo</button>
-    </div>
-  </div>
-
   <div id="letterModal" class="overlay hidden">
     <div class="card">
       <h2>Odhalila si stopu</h2>
@@ -727,7 +719,6 @@
         outerRadius: 200, triggerRadius: 25, letter: "E",
         riddle: "Mesto tu na chvíľu stíchne. Stromy, lavičky a názov, ktorý znie ako recept od lekára. Nájdi záhradu a nadýchni sa. Odtiaľto sa to začína.",
         answers: ["medicka zahrada", "medická záhrada", "medicka", "garden", "medical garden"],
-        challenge: "Sadni si na lavičku. Nadýchni sa. Až potom pokračuj — dnes sa neponáhľame.",
         hint: "Veľký zelený park pri starom meste."
       },
       {
@@ -737,7 +728,6 @@
         outerRadius: 180, triggerRadius: 20, letter: "T",
         riddle: "Najhorší deň týždňa, ale tu sa s ním dá zmieriť. Stačí šálka kávy.",
         answers: ["blue mondays", "bluemondays", "blue monday", "dunajska 16", "dunajská 16"],
-        challenge: "Objednaj dve kávy — jednu pre seba, jednu pre mňa. Sprav fotku oboch pohárov spolu.",
         hint: "Kaviareň na Dunajskej s veľmi pondelkovým názvom."
       },
       {
@@ -747,7 +737,6 @@
         outerRadius: 160, triggerRadius: 20, letter: "H",
         riddle: "Kocky, komiksy, draci na poličkách. Sem sa nechodí po veci, ale po iné svety.",
         answers: ["funtastic", "fantastic", "obchodna 14", "obchodná 14"],
-        challenge: "Nájdi v okne jednu vec, ktorá ti pripomína nás. Sprav fotku.",
         hint: "Fantasy obchod na Obchodnej — knihy, komiksy, hry."
       },
       {
@@ -757,7 +746,6 @@
         outerRadius: 160, triggerRadius: 20, letter: "N",
         riddle: "Nič tu nie je tvoje, a predsa si odnesieš domov, čo chceš. Hľadaj číslo päť.",
         answers: ["kniznica", "knižnica", "library", "laurinska 5", "laurinská 5", "mestská knižnica"],
-        challenge: "Povedzte si navzájom názov poslednej knihy, ktorú ste si zamilovali.",
         hint: "Mestská knižnica na Laurinskej 5."
       },
       {
@@ -765,14 +753,13 @@
         coords: [48.1438174, 17.1090109],
         searchCenter: [48.1439, 17.1092],
         outerRadius: 120, triggerRadius: 18, letter: "EN",
-        riddle: "Tu pracoval môj milovaný boyfriend Matúško. Nájdi miesto, kde sa to všetko začalo.",
+        riddle: "Kedysi tu pracovalo TMB — tvoje malé baby.",
         answers: [
           "muzeum mesta bratislavy", "múzeum mesta bratislavy",
           "mmb", "muzeum", "múzeum",
           "stara radnica", "stará radnica",
           "nadvarie starej radnice", "nádvorie starej radnice"
         ],
-        challenge: "Postav sa tam, kde stál on. Spravte spoločnú fotku — začiatok príbehu.",
         hint: "Nádvorie Starej radnice — Múzeum mesta Bratislavy."
       },
       {
@@ -782,7 +769,6 @@
         outerRadius: 160, triggerRadius: 20, letter: "I",
         riddle: "Sushi, ktoré nikdy nevidelo more. Ryža, zelenina, žiadna ryba a žiadne výčitky.",
         answers: ["smak", "šmak", "smak vegan sushi", "šmak vegan sushi", "klariská 12", "klarisska 12"],
-        challenge: "Prečítaj si menu pred vchodom. Vyber jeden roll, ktorý by sme si dali spolu.",
         hint: "Vegánske sushi na Klariská."
       },
       {
@@ -792,7 +778,6 @@
         outerRadius: 130, triggerRadius: 18, letter: "D",
         riddle: "Jeho hrdina obehol svet za osemdesiat dní. Ty si dnes obehla Bratislavu za jeden. Nájdi pub, ktorý nesie meno autora, a sadni si. Posledná zastávka.",
         answers: ["zil verne", "žil verne", "zil verne pub", "žil verne pub", "verne", "verne pub", "zil", "žil"],
-        challenge: "Objednaj si jeden drink. Sadni si. Pripime si na nás — a na to, čo príde.",
         hint: "Pivničný pub pomenovaný po Julesovi Vernovi."
       }
     ];
@@ -804,7 +789,7 @@
       successMessage: "IN THE END — skús hádať, čo to môže znamenať.\n\nAk nevieš, odpoveď nájdeš v obálke. 🖤"
     };
 
-    const STORAGE_KEY = 'catHunt_progress_v27';
+    const STORAGE_KEY = 'catHunt_progress_v29';
 
     let currentStopIndex = 0;
     let isFinal = false;
@@ -1042,7 +1027,7 @@
     }
 
     function closeAllModals() {
-      ['startScreen','riddleModal','challengeModal','letterModal',
+      ['startScreen','riddleModal','letterModal',
        'finalGuessModal','finalModal','gpsErrorModal'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
       });
@@ -1096,7 +1081,13 @@
         animateCats('bounce');
         vibrate([50, 40, 80]);
         document.getElementById('riddleModal').classList.add('hidden');
-        setTimeout(() => showChallenge(stop), 700);
+        setTimeout(() => {
+          const finished = stops[currentStopIndex];
+          currentStopIndex++;
+          saveProgress();
+          updateLetterBar();
+          showLetterReveal(finished);
+        }, 700);
       } else {
         setCatFace('sad');
         animateCats('shake');
@@ -1109,20 +1100,6 @@
         setTimeout(() => card.classList.remove('shake'), 700);
         autoResetFace(1800);
       }
-    }
-
-    function showChallenge(stop) {
-      document.getElementById('challengeText').textContent = stop.challenge;
-      document.getElementById('challengeModal').classList.remove('hidden');
-    }
-
-    function completeChallenge() {
-      document.getElementById('challengeModal').classList.add('hidden');
-      const finishedStop = stops[currentStopIndex];
-      currentStopIndex++;
-      saveProgress();
-      updateLetterBar();
-      showLetterReveal(finishedStop);
     }
 
     function showLetterReveal(stop) {
@@ -1337,7 +1314,6 @@
       });
       document.getElementById('submitAnswerBtn').addEventListener('click', submitAnswer);
       document.getElementById('hintBtn').addEventListener('click', showHint);
-      document.getElementById('completeChallengeBtn').addEventListener('click', completeChallenge);
       document.getElementById('continueBtn').addEventListener('click', continueAfterLetter);
       document.getElementById('submitFinalBtn').addEventListener('click', submitFinalGuess);
       document.getElementById('gpsRetryBtn').addEventListener('click', () => {
