@@ -1,13 +1,10 @@
-Here is the complete index.html with your five new stops. I've kept all the existing features—the pixel cat, vibration, dark UI, debug panel—and replaced only the stops and final puzzle.
-
-```html
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sk">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#111111" />
-  <title>Bratislava Treasure Hunt</title>
+  <title>Bratislavský poklad</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     * { box-sizing: border-box; }
@@ -37,22 +34,26 @@ Here is the complete index.html with your five new stops. I've kept all the exis
       text-align: center;
       letter-spacing: 0.3px;
     }
-    #emojiBar {
+    #letterBar {
       position: absolute;
       top: 14px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(20,20,20,0.92);
       color: white;
-      padding: 10px 20px;
+      padding: 10px 22px;
       border-radius: 999px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.4);
       z-index: 500;
-      font-size: 24px;
-      letter-spacing: 8px;
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 4px;
       display: none;
       align-items: center;
       border: 1px solid rgba(255,255,255,0.1);
+      white-space: nowrap;
+      max-width: 92vw;
+      overflow-x: auto;
     }
     #recenterBtn {
       position: absolute;
@@ -82,14 +83,31 @@ Here is the complete index.html with your five new stops. I've kept all the exis
       background: rgba(20,20,20,0.92);
       border: 1px solid rgba(255,255,255,0.15);
       border-radius: 16px;
-      padding: 10px 12px 8px;
+      padding: 10px 10px 8px;
       display: none;
       flex-direction: column;
       align-items: center;
       box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-      min-width: 88px;
     }
     #catWidget.visible { display: flex; }
+    .catPair {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .catSlot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .catName {
+      color: rgba(255,255,255,0.7);
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 3px;
+    }
     #catLabel {
       color: white;
       font-size: 10px;
@@ -102,11 +120,9 @@ Here is the complete index.html with your five new stops. I've kept all the exis
       opacity: 0.9;
     }
 
-    .cat {
-      display: block;
-      image-rendering: pixelated;
-    }
-    .cat .cat-fur { fill: var(--cat-fur); transition: fill 0.4s; }
+    .cat { display: block; image-rendering: pixelated; }
+    .cat .cat-fur { transition: fill 0.4s; }
+    .cat .cat-patch { transition: fill 0.4s; }
     .cat .face-sad, .cat .face-happy { display: none; }
     .cat.face-sad .face-neutral,
     .cat.face-happy .face-neutral { display: none; }
@@ -135,10 +151,19 @@ Here is the complete index.html with your five new stops. I've kept all the exis
     .cat.shake { animation: catShake 0.45s ease; }
     .cat.bounce { animation: catBounce 0.55s ease; }
 
-    .cat-in-modal {
-      margin: 0 auto 12px;
-      width: 64px;
-      height: 64px;
+    .catPair-modal {
+      justify-content: center;
+      margin: 0 auto 14px;
+    }
+    .catPair-modal .cat-in-modal {
+      margin: 0;
+      width: 56px;
+      height: 56px;
+    }
+    .catPair-modal .catName {
+      color: #999;
+      font-size: 9px;
+      margin-top: 2px;
     }
 
     #debugPanel {
@@ -147,58 +172,95 @@ Here is the complete index.html with your five new stops. I've kept all the exis
       left: 12px;
       right: 12px;
       z-index: 2500;
-      background: rgba(0,0,0,0.88);
-      border-radius: 16px;
-      padding: 12px;
+      background: rgba(0,0,0,0.9);
+      border-radius: 12px;
       color: white;
-      font-size: 12px;
+      font-size: 11px;
       display: none;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      overflow: hidden;
     }
     #debugPanel.visible { display: block; }
-    #debugPanel h3 {
-      margin: 0 0 8px;
-      font-size: 12px;
-      text-align: center;
-      letter-spacing: 1.5px;
+    .debugHeader {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 10px;
+      background: rgba(255,255,255,0.05);
+      font-size: 10px;
       text-transform: uppercase;
-      opacity: 0.6;
+      letter-spacing: 1.5px;
+      opacity: 0.7;
     }
+    .dbgToggleBtn {
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0 6px;
+      line-height: 1;
+      user-select: none;
+    }
+    #dbgBody { padding: 8px; }
+    #dbgBody.collapsed { display: none; }
     .debugGrid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-      margin-bottom: 8px;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin-bottom: 6px;
     }
     .debugGrid button {
-      padding: 10px 4px;
-      font-size: 13px;
+      padding: 6px 2px;
+      font-size: 11px;
       font-weight: 700;
       background: #333;
       color: white;
-      border-radius: 10px;
+      border-radius: 6px;
       border: none;
       width: 100%;
     }
     .debugGrid button.active { background: #e91e63; }
-    .debugRow {
+    .debugRowFive {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 6px;
-      margin-top: 6px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      margin-bottom: 6px;
     }
-    .debugRow button {
-      padding: 10px 6px;
-      font-size: 12px;
+    .debugRowFive button {
+      padding: 7px 2px;
+      font-size: 10px;
       font-weight: 700;
       background: #2a2a2a;
       color: white;
-      border-radius: 10px;
+      border-radius: 6px;
       border: none;
       width: 100%;
     }
-    .debugRow button.danger { background: #8b1c1c; }
-    .debugRow button.good { background: #2e7d32; }
+    .debugRowFive button.danger { background: #8b1c1c; }
+    .debugRowFive button.good { background: #2e7d32; }
+    .debugRowFive button.neutral { background: #444; }
+    .debugLabel {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.5;
+      margin: 4px 0 3px;
+      text-align: center;
+    }
+    .debugRowSix {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+    }
+    .debugRowSix button {
+      padding: 7px 2px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #444;
+      color: white;
+      border-radius: 6px;
+      border: none;
+      width: 100%;
+    }
+    .debugRowSix button.active { background: #e91e63; }
 
     .overlay {
       position: absolute;
@@ -225,28 +287,9 @@ Here is the complete index.html with your five new stops. I've kept all the exis
       border: 1px solid rgba(0,0,0,0.05);
     }
     .card.shake { animation: catShake 0.45s ease; }
-    h1 {
-      font-size: 26px;
-      margin: 0 0 14px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-      color: #1a1a1a;
-    }
-    h2 {
-      font-size: 18px;
-      margin: 0 0 14px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      color: #999;
-    }
-    p {
-      line-height: 1.65;
-      margin: 0 0 18px;
-      color: #444;
-      white-space: pre-line;
-      font-size: 15px;
-    }
+    h1 { font-size: 26px; margin: 0 0 14px; font-weight: 700; letter-spacing: -0.3px; color: #1a1a1a; }
+    h2 { font-size: 18px; margin: 0 0 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: #999; }
+    p { line-height: 1.65; margin: 0 0 18px; color: #444; white-space: pre-line; font-size: 15px; }
     input {
       width: 100%;
       padding: 14px 16px;
@@ -288,32 +331,28 @@ Here is the complete index.html with your five new stops. I've kept all the exis
       border: 2px solid #e91e63;
       margin-top: 8px;
     }
-    .error {
-      color: #d32f2f;
-      font-size: 13px;
-      margin-bottom: 12px;
-      min-height: 20px;
-    }
-    .bigEmoji {
-      font-size: 100px;
+    .error { color: #d32f2f; font-size: 13px; margin-bottom: 12px; min-height: 20px; }
+    .bigLetter {
+      font-size: 84px;
       line-height: 1;
-      margin: 24px 0 28px;
+      margin: 20px 0 26px;
+      color: #e91e63;
+      font-weight: 900;
+      letter-spacing: 2px;
+      font-family: Georgia, "Times New Roman", serif;
       animation: pop 0.5s ease-out;
     }
     .revealRow {
-      font-size: 48px;
-      letter-spacing: 10px;
+      font-size: 28px;
+      letter-spacing: 8px;
       margin: 24px 0 28px;
       word-break: break-word;
       color: #1a1a1a;
+      font-weight: 800;
+      font-family: Georgia, "Times New Roman", serif;
+      text-indent: 8px;
     }
-    .divider {
-      width: 40px;
-      height: 2px;
-      background: #e91e63;
-      margin: 20px auto;
-      opacity: 0.6;
-    }
+    .divider { width: 40px; height: 2px; background: #e91e63; margin: 20px auto; opacity: 0.6; }
     @keyframes pop {
       0% { transform: scale(0.3); opacity: 0; }
       60% { transform: scale(1.15); opacity: 1; }
@@ -323,88 +362,164 @@ Here is the complete index.html with your five new stops. I've kept all the exis
 </head>
 <body>
   <div id="map"></div>
-  <div id="emojiBar"></div>
-  <div id="status">Ready to begin?</div>
-  <button id="recenterBtn" title="Recenter">◎</button>
+  <div id="letterBar"></div>
+  <div id="status">Pripravená začať?</div>
+  <button id="recenterBtn" title="Vycentrovať">◎</button>
 
   <div id="catWidget">
-    <svg class="cat" viewBox="0 0 16 16" width="56" height="56" shape-rendering="crispEdges">
-      <g class="weather-snow">
-        <rect x="0" y="1" width="1" height="1" fill="#BBDEFB"/>
-        <rect x="15" y="2" width="1" height="1" fill="#BBDEFB"/>
-        <rect x="0" y="13" width="1" height="1" fill="#BBDEFB"/>
-        <rect x="15" y="14" width="1" height="1" fill="#BBDEFB"/>
-        <rect x="7" y="15" width="1" height="1" fill="#BBDEFB"/>
-      </g>
-      <g class="weather-sweat">
-        <rect x="0" y="5" width="1" height="2" fill="#64B5F6"/>
-        <rect x="15" y="5" width="1" height="2" fill="#64B5F6"/>
-        <rect x="0" y="10" width="1" height="2" fill="#64B5F6"/>
-        <rect x="15" y="10" width="1" height="2" fill="#64B5F6"/>
-      </g>
-      <g class="weather-hearts">
-        <rect x="0" y="3" width="1" height="1" fill="#E91E63"/>
-        <rect x="15" y="3" width="1" height="1" fill="#E91E63"/>
-        <rect x="0" y="12" width="1" height="1" fill="#E91E63"/>
-        <rect x="15" y="12" width="1" height="1" fill="#E91E63"/>
-      </g>
-      <rect x="2" y="0" width="2" height="1" class="cat-fur"/>
-      <rect x="1" y="1" width="3" height="1" class="cat-fur"/>
-      <rect x="1" y="2" width="3" height="1" class="cat-fur"/>
-      <rect x="12" y="0" width="2" height="1" class="cat-fur"/>
-      <rect x="12" y="1" width="3" height="1" class="cat-fur"/>
-      <rect x="12" y="2" width="3" height="1" class="cat-fur"/>
-      <rect x="1" y="3" width="14" height="11" class="cat-fur"/>
-      <g class="face-neutral">
-        <rect x="4" y="6" width="2" height="2" fill="#000"/>
-        <rect x="10" y="6" width="2" height="2" fill="#000"/>
-        <rect x="4" y="6" width="1" height="1" fill="#fff"/>
-        <rect x="10" y="6" width="1" height="1" fill="#fff"/>
-        <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
-        <rect x="6" y="10" width="1" height="1" fill="#000"/>
-        <rect x="9" y="10" width="1" height="1" fill="#000"/>
-      </g>
-      <g class="face-sad">
-        <rect x="4" y="6" width="1" height="1" fill="#000"/>
-        <rect x="5" y="7" width="1" height="1" fill="#000"/>
-        <rect x="10" y="7" width="1" height="1" fill="#000"/>
-        <rect x="11" y="6" width="1" height="1" fill="#000"/>
-        <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
-        <rect x="6" y="11" width="1" height="1" fill="#000"/>
-        <rect x="7" y="10" width="2" height="1" fill="#000"/>
-        <rect x="9" y="11" width="1" height="1" fill="#000"/>
-      </g>
-      <g class="face-happy">
-        <rect x="4" y="7" width="1" height="1" fill="#000"/>
-        <rect x="5" y="6" width="1" height="1" fill="#000"/>
-        <rect x="6" y="7" width="1" height="1" fill="#000"/>
-        <rect x="9" y="7" width="1" height="1" fill="#000"/>
-        <rect x="10" y="6" width="1" height="1" fill="#000"/>
-        <rect x="11" y="7" width="1" height="1" fill="#000"/>
-        <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
-        <rect x="6" y="10" width="4" height="1" fill="#000"/>
-        <rect x="5" y="11" width="6" height="1" fill="#000"/>
-        <rect x="6" y="12" width="4" height="1" fill="#F48FB1"/>
-      </g>
-    </svg>
-    <div id="catLabel">locating…</div>
+    <div class="catPair">
+      <div class="catSlot">
+        <svg class="cat cat-hubert" viewBox="0 0 16 16" width="48" height="48" shape-rendering="crispEdges">
+          <g class="weather-snow">
+            <rect x="0" y="1" width="1" height="1" fill="#BBDEFB"/>
+            <rect x="15" y="2" width="1" height="1" fill="#BBDEFB"/>
+            <rect x="0" y="13" width="1" height="1" fill="#BBDEFB"/>
+            <rect x="15" y="14" width="1" height="1" fill="#BBDEFB"/>
+          </g>
+          <g class="weather-sweat">
+            <rect x="0" y="5" width="1" height="2" fill="#64B5F6"/>
+            <rect x="15" y="5" width="1" height="2" fill="#64B5F6"/>
+            <rect x="0" y="10" width="1" height="2" fill="#64B5F6"/>
+            <rect x="15" y="10" width="1" height="2" fill="#64B5F6"/>
+          </g>
+          <g class="weather-hearts">
+            <rect x="0" y="3" width="1" height="1" fill="#E91E63"/>
+            <rect x="15" y="3" width="1" height="1" fill="#E91E63"/>
+            <rect x="0" y="12" width="1" height="1" fill="#E91E63"/>
+            <rect x="15" y="12" width="1" height="1" fill="#E91E63"/>
+          </g>
+          <rect x="2" y="0" width="2" height="1" class="cat-fur"/>
+          <rect x="1" y="1" width="3" height="1" class="cat-fur"/>
+          <rect x="1" y="2" width="3" height="1" class="cat-fur"/>
+          <rect x="12" y="0" width="2" height="1" class="cat-fur"/>
+          <rect x="12" y="1" width="3" height="1" class="cat-fur"/>
+          <rect x="12" y="2" width="3" height="1" class="cat-fur"/>
+          <rect x="1" y="3" width="14" height="11" class="cat-fur"/>
+          <rect x="4" y="10" width="8" height="4" class="cat-patch" style="fill:#FFF8E7"/>
+          <rect x="5" y="9" width="6" height="1" class="cat-patch" style="fill:#FFF8E7"/>
+          <rect x="6" y="3" width="4" height="2" class="cat-patch" style="fill:#FFF8E7"/>
+          <g class="face-neutral">
+            <rect x="4" y="6" width="2" height="2" fill="#000"/>
+            <rect x="10" y="6" width="2" height="2" fill="#000"/>
+            <rect x="4" y="6" width="1" height="1" fill="#fff"/>
+            <rect x="10" y="6" width="1" height="1" fill="#fff"/>
+            <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+            <rect x="6" y="11" width="1" height="1" fill="#000"/>
+            <rect x="9" y="11" width="1" height="1" fill="#000"/>
+          </g>
+          <g class="face-sad">
+            <rect x="4" y="6" width="1" height="1" fill="#000"/>
+            <rect x="5" y="7" width="1" height="1" fill="#000"/>
+            <rect x="10" y="7" width="1" height="1" fill="#000"/>
+            <rect x="11" y="6" width="1" height="1" fill="#000"/>
+            <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+            <rect x="6" y="12" width="1" height="1" fill="#000"/>
+            <rect x="7" y="11" width="2" height="1" fill="#000"/>
+            <rect x="9" y="12" width="1" height="1" fill="#000"/>
+          </g>
+          <g class="face-happy">
+            <rect x="4" y="7" width="1" height="1" fill="#000"/>
+            <rect x="5" y="6" width="1" height="1" fill="#000"/>
+            <rect x="6" y="7" width="1" height="1" fill="#000"/>
+            <rect x="9" y="7" width="1" height="1" fill="#000"/>
+            <rect x="10" y="6" width="1" height="1" fill="#000"/>
+            <rect x="11" y="7" width="1" height="1" fill="#000"/>
+            <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+            <rect x="6" y="11" width="4" height="1" fill="#000"/>
+            <rect x="5" y="12" width="6" height="1" fill="#000"/>
+            <rect x="6" y="13" width="4" height="1" fill="#F48FB1"/>
+          </g>
+        </svg>
+        <div class="catName">Hubík</div>
+      </div>
+      <div class="catSlot">
+        <svg class="cat cat-nabinka" viewBox="0 0 16 16" width="48" height="48" shape-rendering="crispEdges">
+          <g class="weather-snow">
+            <rect x="0" y="1" width="1" height="1" fill="#BBDEFB"/>
+            <rect x="15" y="2" width="1" height="1" fill="#BBDEFB"/>
+            <rect x="0" y="13" width="1" height="1" fill="#BBDEFB"/>
+            <rect x="15" y="14" width="1" height="1" fill="#BBDEFB"/>
+          </g>
+          <g class="weather-sweat">
+            <rect x="0" y="5" width="1" height="2" fill="#64B5F6"/>
+            <rect x="15" y="5" width="1" height="2" fill="#64B5F6"/>
+            <rect x="0" y="10" width="1" height="2" fill="#64B5F6"/>
+            <rect x="15" y="10" width="1" height="2" fill="#64B5F6"/>
+          </g>
+          <g class="weather-hearts">
+            <rect x="0" y="3" width="1" height="1" fill="#E91E63"/>
+            <rect x="15" y="3" width="1" height="1" fill="#E91E63"/>
+            <rect x="0" y="12" width="1" height="1" fill="#E91E63"/>
+            <rect x="15" y="12" width="1" height="1" fill="#E91E63"/>
+          </g>
+          <rect x="2" y="0" width="2" height="1" class="cat-fur"/>
+          <rect x="1" y="1" width="3" height="1" class="cat-fur"/>
+          <rect x="1" y="2" width="3" height="1" class="cat-fur"/>
+          <rect x="12" y="0" width="2" height="1" class="cat-fur"/>
+          <rect x="12" y="1" width="3" height="1" class="cat-fur"/>
+          <rect x="12" y="2" width="3" height="1" class="cat-fur"/>
+          <rect x="1" y="3" width="14" height="11" class="cat-fur"/>
+          <g class="face-neutral">
+            <rect x="4" y="6" width="2" height="2" fill="#000"/>
+            <rect x="10" y="6" width="2" height="2" fill="#000"/>
+            <rect x="4" y="6" width="1" height="1" fill="#fff"/>
+            <rect x="10" y="6" width="1" height="1" fill="#fff"/>
+            <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+            <rect x="6" y="10" width="1" height="1" fill="#000"/>
+            <rect x="9" y="10" width="1" height="1" fill="#000"/>
+          </g>
+          <g class="face-sad">
+            <rect x="4" y="6" width="1" height="1" fill="#000"/>
+            <rect x="5" y="7" width="1" height="1" fill="#000"/>
+            <rect x="10" y="7" width="1" height="1" fill="#000"/>
+            <rect x="11" y="6" width="1" height="1" fill="#000"/>
+            <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+            <rect x="6" y="11" width="1" height="1" fill="#000"/>
+            <rect x="7" y="10" width="2" height="1" fill="#000"/>
+            <rect x="9" y="11" width="1" height="1" fill="#000"/>
+          </g>
+          <g class="face-happy">
+            <rect x="4" y="7" width="1" height="1" fill="#000"/>
+            <rect x="5" y="6" width="1" height="1" fill="#000"/>
+            <rect x="6" y="7" width="1" height="1" fill="#000"/>
+            <rect x="9" y="7" width="1" height="1" fill="#000"/>
+            <rect x="10" y="6" width="1" height="1" fill="#000"/>
+            <rect x="11" y="7" width="1" height="1" fill="#000"/>
+            <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+            <rect x="6" y="10" width="4" height="1" fill="#000"/>
+            <rect x="5" y="11" width="6" height="1" fill="#000"/>
+            <rect x="6" y="12" width="4" height="1" fill="#F48FB1"/>
+          </g>
+        </svg>
+        <div class="catName">Nabinka</div>
+      </div>
+    </div>
+    <div id="catLabel">hľadám…</div>
   </div>
 
   <div id="debugPanel">
-    <h3>Debug Panel</h3>
-    <div class="debugGrid" id="debugStopGrid"></div>
-    <div class="debugRow">
-      <button id="dbgSolve" class="good">Solve</button>
-      <button id="dbgSkip" class="good">Skip</button>
-      <button id="dbgEnd" class="good">End</button>
+    <div class="debugHeader">
+      <span>Debug</span>
+      <span id="dbgToggle" class="dbgToggleBtn">–</span>
     </div>
-    <div class="debugRow">
-      <button id="dbgSkipRiddle" class="good">Skip Riddle</button>
-      <button id="dbgHide">Hide</button>
-      <button id="dbgShow">Show</button>
-    </div>
-    <div class="debugRow">
-      <button id="dbgReset" class="danger">Reset</button>
+    <div id="dbgBody">
+      <div class="debugGrid" id="debugStopGrid"></div>
+      <div class="debugRowFive">
+        <button id="dbgSolve" class="good">Vyriešiť</button>
+        <button id="dbgSkip" class="good">Preskočiť</button>
+        <button id="dbgEnd" class="good">Koniec</button>
+        <button id="dbgHide" class="neutral">Skryť</button>
+        <button id="dbgReset" class="danger">Reset</button>
+      </div>
+      <div class="debugLabel">Simulovať vzdialenosť od cieľa:</div>
+      <div class="debugRowSix" id="debugDistRow">
+        <button class="distBtn" data-dist="1000">1km</button>
+        <button class="distBtn" data-dist="500">500</button>
+        <button class="distBtn" data-dist="200">200</button>
+        <button class="distBtn" data-dist="100">100</button>
+        <button class="distBtn" data-dist="50">50</button>
+        <button class="distBtn" data-dist="10">10</button>
+      </div>
     </div>
   </div>
 
@@ -412,96 +527,183 @@ Here is the complete index.html with your five new stops. I've kept all the exis
     <div class="card">
       <h1>Bratislava</h1>
       <div class="divider"></div>
-      <p id="startMessage">A treasure hunt made just for you. Follow the clues through the city, solve each riddle, and collect the five pieces of the final puzzle. The treasure at the end is worth it — I promise.</p>
-      <button id="startBtn">Begin</button>
-      <button id="resumeBtn" class="ghost" style="display:none;">Continue</button>
-      <button id="restartBtn" class="secondary" style="display:none;">Start over</button>
+      <p id="startMessage">Moja milovaná Simonka, dnes ťa čaká malé dobrodružstvo…</p>
+      <button id="startBtn">Štart</button>
+      <button id="resumeBtn" class="ghost" style="display:none;">Pokračuj</button>
+      <button id="restartBtn" class="secondary" style="display:none;">Začať odznova</button>
     </div>
   </div>
 
   <div id="riddleModal" class="overlay hidden">
     <div class="card" id="riddleCard">
-      <svg class="cat cat-in-modal" viewBox="0 0 16 16" shape-rendering="crispEdges">
-        <rect x="2" y="0" width="2" height="1" class="cat-fur"/>
-        <rect x="1" y="1" width="3" height="1" class="cat-fur"/>
-        <rect x="1" y="2" width="3" height="1" class="cat-fur"/>
-        <rect x="12" y="0" width="2" height="1" class="cat-fur"/>
-        <rect x="12" y="1" width="3" height="1" class="cat-fur"/>
-        <rect x="12" y="2" width="3" height="1" class="cat-fur"/>
-        <rect x="1" y="3" width="14" height="11" class="cat-fur"/>
-        <g class="face-neutral">
-          <rect x="4" y="6" width="2" height="2" fill="#000"/>
-          <rect x="10" y="6" width="2" height="2" fill="#000"/>
-          <rect x="4" y="6" width="1" height="1" fill="#fff"/>
-          <rect x="10" y="6" width="1" height="1" fill="#fff"/>
-          <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
-          <rect x="6" y="10" width="1" height="1" fill="#000"/>
-          <rect x="9" y="10" width="1" height="1" fill="#000"/>
-        </g>
-        <g class="face-sad">
-          <rect x="4" y="6" width="1" height="1" fill="#000"/>
-          <rect x="5" y="7" width="1" height="1" fill="#000"/>
-          <rect x="10" y="7" width="1" height="1" fill="#000"/>
-          <rect x="11" y="6" width="1" height="1" fill="#000"/>
-          <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
-          <rect x="6" y="11" width="1" height="1" fill="#000"/>
-          <rect x="7" y="10" width="2" height="1" fill="#000"/>
-          <rect x="9" y="11" width="1" height="1" fill="#000"/>
-        </g>
-        <g class="face-happy">
-          <rect x="4" y="7" width="1" height="1" fill="#000"/>
-          <rect x="5" y="6" width="1" height="1" fill="#000"/>
-          <rect x="6" y="7" width="1" height="1" fill="#000"/>
-          <rect x="9" y="7" width="1" height="1" fill="#000"/>
-          <rect x="10" y="6" width="1" height="1" fill="#000"/>
-          <rect x="11" y="7" width="1" height="1" fill="#000"/>
-          <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
-          <rect x="6" y="10" width="4" height="1" fill="#000"/>
-          <rect x="5" y="11" width="6" height="1" fill="#000"/>
-          <rect x="6" y="12" width="4" height="1" fill="#F48FB1"/>
-        </g>
-      </svg>
-      <h2>Clue</h2>
+      <div class="catPair catPair-modal">
+        <div class="catSlot">
+          <svg class="cat cat-hubert cat-in-modal" viewBox="0 0 16 16" shape-rendering="crispEdges">
+            <g class="weather-snow">
+              <rect x="0" y="1" width="1" height="1" fill="#BBDEFB"/>
+              <rect x="15" y="2" width="1" height="1" fill="#BBDEFB"/>
+              <rect x="0" y="13" width="1" height="1" fill="#BBDEFB"/>
+              <rect x="15" y="14" width="1" height="1" fill="#BBDEFB"/>
+            </g>
+            <g class="weather-sweat">
+              <rect x="0" y="5" width="1" height="2" fill="#64B5F6"/>
+              <rect x="15" y="5" width="1" height="2" fill="#64B5F6"/>
+              <rect x="0" y="10" width="1" height="2" fill="#64B5F6"/>
+              <rect x="15" y="10" width="1" height="2" fill="#64B5F6"/>
+            </g>
+            <g class="weather-hearts">
+              <rect x="0" y="3" width="1" height="1" fill="#E91E63"/>
+              <rect x="15" y="3" width="1" height="1" fill="#E91E63"/>
+              <rect x="0" y="12" width="1" height="1" fill="#E91E63"/>
+              <rect x="15" y="12" width="1" height="1" fill="#E91E63"/>
+            </g>
+            <rect x="2" y="0" width="2" height="1" class="cat-fur"/>
+            <rect x="1" y="1" width="3" height="1" class="cat-fur"/>
+            <rect x="1" y="2" width="3" height="1" class="cat-fur"/>
+            <rect x="12" y="0" width="2" height="1" class="cat-fur"/>
+            <rect x="12" y="1" width="3" height="1" class="cat-fur"/>
+            <rect x="12" y="2" width="3" height="1" class="cat-fur"/>
+            <rect x="1" y="3" width="14" height="11" class="cat-fur"/>
+            <rect x="4" y="10" width="8" height="4" class="cat-patch" style="fill:#FFF8E7"/>
+            <rect x="5" y="9" width="6" height="1" class="cat-patch" style="fill:#FFF8E7"/>
+            <rect x="6" y="3" width="4" height="2" class="cat-patch" style="fill:#FFF8E7"/>
+            <g class="face-neutral">
+              <rect x="4" y="6" width="2" height="2" fill="#000"/>
+              <rect x="10" y="6" width="2" height="2" fill="#000"/>
+              <rect x="4" y="6" width="1" height="1" fill="#fff"/>
+              <rect x="10" y="6" width="1" height="1" fill="#fff"/>
+              <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+              <rect x="6" y="11" width="1" height="1" fill="#000"/>
+              <rect x="9" y="11" width="1" height="1" fill="#000"/>
+            </g>
+            <g class="face-sad">
+              <rect x="4" y="6" width="1" height="1" fill="#000"/>
+              <rect x="5" y="7" width="1" height="1" fill="#000"/>
+              <rect x="10" y="7" width="1" height="1" fill="#000"/>
+              <rect x="11" y="6" width="1" height="1" fill="#000"/>
+              <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+              <rect x="6" y="12" width="1" height="1" fill="#000"/>
+              <rect x="7" y="11" width="2" height="1" fill="#000"/>
+              <rect x="9" y="12" width="1" height="1" fill="#000"/>
+            </g>
+            <g class="face-happy">
+              <rect x="4" y="7" width="1" height="1" fill="#000"/>
+              <rect x="5" y="6" width="1" height="1" fill="#000"/>
+              <rect x="6" y="7" width="1" height="1" fill="#000"/>
+              <rect x="9" y="7" width="1" height="1" fill="#000"/>
+              <rect x="10" y="6" width="1" height="1" fill="#000"/>
+              <rect x="11" y="7" width="1" height="1" fill="#000"/>
+              <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+              <rect x="6" y="11" width="4" height="1" fill="#000"/>
+              <rect x="5" y="12" width="6" height="1" fill="#000"/>
+              <rect x="6" y="13" width="4" height="1" fill="#F48FB1"/>
+            </g>
+          </svg>
+          <div class="catName">Hubík</div>
+        </div>
+        <div class="catSlot">
+          <svg class="cat cat-nabinka cat-in-modal" viewBox="0 0 16 16" shape-rendering="crispEdges">
+            <g class="weather-snow">
+              <rect x="0" y="1" width="1" height="1" fill="#BBDEFB"/>
+              <rect x="15" y="2" width="1" height="1" fill="#BBDEFB"/>
+              <rect x="0" y="13" width="1" height="1" fill="#BBDEFB"/>
+              <rect x="15" y="14" width="1" height="1" fill="#BBDEFB"/>
+            </g>
+            <g class="weather-sweat">
+              <rect x="0" y="5" width="1" height="2" fill="#64B5F6"/>
+              <rect x="15" y="5" width="1" height="2" fill="#64B5F6"/>
+              <rect x="0" y="10" width="1" height="2" fill="#64B5F6"/>
+              <rect x="15" y="10" width="1" height="2" fill="#64B5F6"/>
+            </g>
+            <g class="weather-hearts">
+              <rect x="0" y="3" width="1" height="1" fill="#E91E63"/>
+              <rect x="15" y="3" width="1" height="1" fill="#E91E63"/>
+              <rect x="0" y="12" width="1" height="1" fill="#E91E63"/>
+              <rect x="15" y="12" width="1" height="1" fill="#E91E63"/>
+            </g>
+            <rect x="2" y="0" width="2" height="1" class="cat-fur"/>
+            <rect x="1" y="1" width="3" height="1" class="cat-fur"/>
+            <rect x="1" y="2" width="3" height="1" class="cat-fur"/>
+            <rect x="12" y="0" width="2" height="1" class="cat-fur"/>
+            <rect x="12" y="1" width="3" height="1" class="cat-fur"/>
+            <rect x="12" y="2" width="3" height="1" class="cat-fur"/>
+            <rect x="1" y="3" width="14" height="11" class="cat-fur"/>
+            <g class="face-neutral">
+              <rect x="4" y="6" width="2" height="2" fill="#000"/>
+              <rect x="10" y="6" width="2" height="2" fill="#000"/>
+              <rect x="4" y="6" width="1" height="1" fill="#fff"/>
+              <rect x="10" y="6" width="1" height="1" fill="#fff"/>
+              <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+              <rect x="6" y="10" width="1" height="1" fill="#000"/>
+              <rect x="9" y="10" width="1" height="1" fill="#000"/>
+            </g>
+            <g class="face-sad">
+              <rect x="4" y="6" width="1" height="1" fill="#000"/>
+              <rect x="5" y="7" width="1" height="1" fill="#000"/>
+              <rect x="10" y="7" width="1" height="1" fill="#000"/>
+              <rect x="11" y="6" width="1" height="1" fill="#000"/>
+              <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+              <rect x="6" y="11" width="1" height="1" fill="#000"/>
+              <rect x="7" y="10" width="2" height="1" fill="#000"/>
+              <rect x="9" y="11" width="1" height="1" fill="#000"/>
+            </g>
+            <g class="face-happy">
+              <rect x="4" y="7" width="1" height="1" fill="#000"/>
+              <rect x="5" y="6" width="1" height="1" fill="#000"/>
+              <rect x="6" y="7" width="1" height="1" fill="#000"/>
+              <rect x="9" y="7" width="1" height="1" fill="#000"/>
+              <rect x="10" y="6" width="1" height="1" fill="#000"/>
+              <rect x="11" y="7" width="1" height="1" fill="#000"/>
+              <rect x="7" y="9" width="2" height="1" fill="#F48FB1"/>
+              <rect x="6" y="10" width="4" height="1" fill="#000"/>
+              <rect x="5" y="11" width="6" height="1" fill="#000"/>
+              <rect x="6" y="12" width="4" height="1" fill="#F48FB1"/>
+            </g>
+          </svg>
+          <div class="catName">Nabinka</div>
+        </div>
+      </div>
+      <h2 id="riddleHeader">Hádanka</h2>
       <p id="riddleText"></p>
-      <input id="answerInput" type="text" placeholder="Your answer" autocomplete="off" />
+      <input id="answerInput" type="text" placeholder="Tvoja odpoveď" autocomplete="off" />
       <div id="answerError" class="error"></div>
-      <button id="submitAnswerBtn">Submit</button>
-      <button id="hintBtn" class="secondary">Hint</button>
+      <button id="submitAnswerBtn">Odoslať</button>
+      <button id="hintBtn" class="secondary">Nápoveda</button>
     </div>
   </div>
 
   <div id="challengeModal" class="overlay hidden">
     <div class="card">
-      <h2>Challenge</h2>
+      <h2>Úloha</h2>
       <p id="challengeText"></p>
-      <button id="completeChallengeBtn">Done</button>
+      <button id="completeChallengeBtn">Hotovo</button>
     </div>
   </div>
 
-  <div id="emojiModal" class="overlay hidden">
+  <div id="letterModal" class="overlay hidden">
     <div class="card">
-      <h2>Piece unlocked</h2>
-      <div id="emojiBig" class="bigEmoji"></div>
-      <p id="emojiProgressText"></p>
-      <button id="continueBtn">Continue</button>
+      <h2>Odhalila si stopu</h2>
+      <div id="letterBig" class="bigLetter"></div>
+      <p id="letterProgressText"></p>
+      <button id="continueBtn">Pokračuj</button>
     </div>
   </div>
 
   <div id="finalGuessModal" class="overlay hidden">
     <div class="card">
-      <h2>Final Puzzle</h2>
-      <p id="finalGuessIntro">You collected all five pieces — but they're <strong>not in order</strong>.</p>
-      <div id="finalEmojis" class="revealRow"></div>
-      <p>Rearrange them and tell me what they spell.</p>
-      <input id="finalAnswerInput" type="text" placeholder="Your answer" autocomplete="off" />
+      <h2>Posledná hádanka</h2>
+      <p id="finalGuessIntro">Nazbierala si všetkých sedem stôp — ale <strong>nie sú v poradí</strong>.</p>
+      <div id="finalLetters" class="revealRow"></div>
+      <p>Zoraď ich a povedz mi, akú frázu tvoria.</p>
+      <input id="finalAnswerInput" type="text" placeholder="Tvoja odpoveď" autocomplete="off" />
       <div id="finalAnswerError" class="error"></div>
-      <button id="submitFinalBtn">Submit</button>
+      <button id="submitFinalBtn">Odoslať</button>
     </div>
   </div>
 
   <div id="finalModal" class="overlay hidden">
     <div class="card">
-      <h1 id="finalTitle">You got it</h1>
+      <h1 id="finalTitle">Uhádla si</h1>
       <div class="divider"></div>
       <p id="finalMessage"></p>
     </div>
@@ -509,9 +711,9 @@ Here is the complete index.html with your five new stops. I've kept all the exis
 
   <div id="gpsErrorModal" class="overlay hidden">
     <div class="card">
-      <h2>Location needed</h2>
+      <h2>Potrebujem polohu</h2>
       <p id="gpsErrorMessage"></p>
-      <button id="gpsRetryBtn">Try again</button>
+      <button id="gpsRetryBtn">Skúsiť znova</button>
     </div>
   </div>
 
@@ -519,77 +721,99 @@ Here is the complete index.html with your five new stops. I've kept all the exis
   <script>
     const stops = [
       {
-        id: 0,
-        name: "Blue Mondays",
-        coords: [48.1445, 17.1156], // Dunajská 16
-        radius: 35,
-        emoji: "👰",
-        riddle: "Blue Mondays, coffee haze — a Monday that never ends. Find the café where the coffee is strong and the name is a mood. Stand outside, take a breath, and let the hunt begin.",
-        answers: ["blue mondays", "bluemondays", "blue monday", "dunajska 16", "dunajská 16"],
-        challenge: "Order two coffees — one for you, one for me. Take a photo of the cups together.",
-        hint: "A café on Dunajská with a very Monday name."
-      },
-      {
-        id: 1,
-        name: "Funtastic",
-        coords: [48.1475, 17.1103], // Obchodná 14
-        radius: 30,
-        emoji: "⚫",
-        riddle: "Dragons, comics, and dice — a shop where fantasy lives. Find the door on Obchodná and peek inside. This is where stories begin.",
-        answers: ["funtastic", "fantastic", "obchodna 14", "obchodná 14"],
-        challenge: "Find one item in the window that reminds you of us. Take a photo of it.",
-        hint: "A fantasy shop on Obchodná — books, comics, games."
-      },
-      {
-        id: 2,
-        name: "Šmak Vegan Sushi",
-        coords: [48.1444, 17.1055], // Klariská 12
-        radius: 30,
-        emoji: "🖤",
-        riddle: "No fish, no fear — just rice and rebellion. A hidden sushi bar with an underground soul. Find the door on Klariská and stand close.",
-        answers: ["smak", "šmak", "smak vegan sushi", "šmak vegan sushi", "klariská 12", "klarisska 12"],
-        challenge: "Read the menu outside. Pick one roll you'd order together.",
-        hint: "Vegan sushi on Klariská."
-      },
-      {
-        id: 3,
-        name: "Knižnica na Laurinskej",
-        coords: [48.1437, 17.1108], // Laurinská 5
-        radius: 35,
-        emoji: "👰",
-        riddle: "Silence, shelves, and stories untold. A library on Laurinská where the city keeps its secrets. Find the number 5 and stand at the door.",
-        answers: ["kniznica", "knižnica", "library", "laurinska 5", "laurinská 5", "mestská knižnica"],
-        challenge: "Tell each other the title of the last book you loved.",
-        hint: "The city library on Laurinská 5."
-      },
-      {
-        id: 4,
-        name: "Medická záhrada",
-        coords: [48.1499, 17.1197], // Medická záhrada
-        radius: 50,
-        emoji: "👰",
-        riddle: "Green, quiet, and older than you think — a garden in the middle of the city. Find the trees, the benches, and the peace. This is where the hunt ends.",
+        id: 0, name: "Medická záhrada",
+        coords: [48.1499, 17.1197],
+        searchCenter: [48.1494, 17.1204],
+        outerRadius: 200, triggerRadius: 25, letter: "E",
+        riddle: "Mesto tu na chvíľu stíchne. Stromy, lavičky a názov, ktorý znie ako recept od lekára. Nájdi záhradu a nadýchni sa. Odtiaľto sa to začína.",
         answers: ["medicka zahrada", "medická záhrada", "medicka", "garden", "medical garden"],
-        challenge: "Sit on a bench. I have something for you. Come find me.",
-        hint: "The big green park near the old town."
+        challenge: "Sadni si na lavičku. Nadýchni sa. Až potom pokračuj — dnes sa neponáhľame.",
+        hint: "Veľký zelený park pri starom meste."
+      },
+      {
+        id: 1, name: "Blue Mondays",
+        coords: [48.1445, 17.1156],
+        searchCenter: [48.1448, 17.1148],
+        outerRadius: 180, triggerRadius: 20, letter: "T",
+        riddle: "Najhorší deň týždňa, ale tu sa s ním dá zmieriť. Stačí šálka kávy.",
+        answers: ["blue mondays", "bluemondays", "blue monday", "dunajska 16", "dunajská 16"],
+        challenge: "Objednaj dve kávy — jednu pre seba, jednu pre mňa. Sprav fotku oboch pohárov spolu.",
+        hint: "Kaviareň na Dunajskej s veľmi pondelkovým názvom."
+      },
+      {
+        id: 2, name: "Funtastic",
+        coords: [48.1475, 17.1103],
+        searchCenter: [48.1471, 17.1109],
+        outerRadius: 160, triggerRadius: 20, letter: "H",
+        riddle: "Kocky, komiksy, draci na poličkách. Sem sa nechodí po veci, ale po iné svety.",
+        answers: ["funtastic", "fantastic", "obchodna 14", "obchodná 14"],
+        challenge: "Nájdi v okne jednu vec, ktorá ti pripomína nás. Sprav fotku.",
+        hint: "Fantasy obchod na Obchodnej — knihy, komiksy, hry."
+      },
+      {
+        id: 3, name: "Knižnica na Laurinskej",
+        coords: [48.1437, 17.1108],
+        searchCenter: [48.1441, 17.1102],
+        outerRadius: 160, triggerRadius: 20, letter: "N",
+        riddle: "Nič tu nie je tvoje, a predsa si odnesieš domov, čo chceš. Hľadaj číslo päť.",
+        answers: ["kniznica", "knižnica", "library", "laurinska 5", "laurinská 5", "mestská knižnica"],
+        challenge: "Povedzte si navzájom názov poslednej knihy, ktorú ste si zamilovali.",
+        hint: "Mestská knižnica na Laurinskej 5."
+      },
+      {
+        id: 4, name: "Múzeum mesta Bratislavy",
+        coords: [48.1438174, 17.1090109],
+        searchCenter: [48.1439, 17.1092],
+        outerRadius: 120, triggerRadius: 18, letter: "EN",
+        riddle: "Tu pracoval môj milovaný boyfriend Matúško. Nájdi miesto, kde sa to všetko začalo.",
+        answers: [
+          "muzeum mesta bratislavy", "múzeum mesta bratislavy",
+          "mmb", "muzeum", "múzeum",
+          "stara radnica", "stará radnica",
+          "nadvarie starej radnice", "nádvorie starej radnice"
+        ],
+        challenge: "Postav sa tam, kde stál on. Spravte spoločnú fotku — začiatok príbehu.",
+        hint: "Nádvorie Starej radnice — Múzeum mesta Bratislavy."
+      },
+      {
+        id: 5, name: "Šmak Vegan Sushi",
+        coords: [48.1444, 17.1055],
+        searchCenter: [48.1448, 17.1062],
+        outerRadius: 160, triggerRadius: 20, letter: "I",
+        riddle: "Sushi, ktoré nikdy nevidelo more. Ryža, zelenina, žiadna ryba a žiadne výčitky.",
+        answers: ["smak", "šmak", "smak vegan sushi", "šmak vegan sushi", "klariská 12", "klarisska 12"],
+        challenge: "Prečítaj si menu pred vchodom. Vyber jeden roll, ktorý by sme si dali spolu.",
+        hint: "Vegánske sushi na Klariská."
+      },
+      {
+        id: 6, name: "Žil VERNE Pub",
+        coords: [48.1424739, 17.1078551],
+        searchCenter: [48.1427, 17.1076],
+        outerRadius: 130, triggerRadius: 18, letter: "D",
+        riddle: "Jeho hrdina obehol svet za osemdesiat dní. Ty si dnes obehla Bratislavu za jeden. Nájdi pub, ktorý nesie meno autora, a sadni si. Posledná zastávka.",
+        answers: ["zil verne", "žil verne", "zil verne pub", "žil verne pub", "verne", "verne pub", "zil", "žil"],
+        challenge: "Objednaj si jeden drink. Sadni si. Pripime si na nás — a na to, čo príde.",
+        hint: "Pivničný pub pomenovaný po Julesovi Vernovi."
       }
     ];
 
     const finalPuzzle = {
-      answers: ["black veil brides", "blackveilbrides", "bvb"],
-      successTitle: "You got it",
-      successMessage: "Black Veil Brides. 🖤\n\nYou found the greatest treasure of all: us. I love you.\n\nNow let's go celebrate."
+      targetPhrase: "IN THE END",
+      answers: ["in the end", "intheend"],
+      successTitle: "Uhádla si",
+      successMessage: "IN THE END — skús hádať, čo to môže znamenať.\n\nAk nevieš, odpoveď nájdeš v obálke. 🖤"
     };
 
-    const STORAGE_KEY = 'catHunt_progress_v9';
+    const STORAGE_KEY = 'catHunt_progress_v27';
 
     let currentStopIndex = 0;
     let isFinal = false;
     let hasFittedForStop = false;
-    let map, userMarker, stopMarker, circle;
+    let map, userMarker, circle;
     let watchId = null;
     let currentPosition = null;
     let faceResetTimer = null;
+    let riddleShown = false;
     const DEBUG = new URLSearchParams(location.search).has('debug');
 
     function saveProgress() {
@@ -600,23 +824,24 @@ Here is the complete index.html with your five new stops. I've kept all the exis
     }
     function clearProgress() { try { localStorage.removeItem(STORAGE_KEY); } catch (e) {} }
 
-    function collectedEmojis() { return stops.slice(0, currentStopIndex).map(s => s.emoji); }
+    function collectedPieces() { return stops.slice(0, currentStopIndex).map(s => s.letter); }
 
-    function updateEmojiBar() {
-      const bar = document.getElementById('emojiBar');
-      const collected = collectedEmojis();
+    function updateLetterBar() {
+      const bar = document.getElementById('letterBar');
+      const collected = collectedPieces();
       if (collected.length === 0) { bar.style.display = 'none'; return; }
       bar.style.display = 'flex';
-      bar.textContent = collected.join(' ');
+      bar.textContent = collected.join('  ');
     }
 
-    const CAT_FUR = {
-      freezing: '#64B5F6', cold: '#90CAF9', warm: '#FFB74D',
-      hot: '#FF7043', sweating: '#F44336', unknown: '#9E9E9E', finished: '#E91E63'
+    const FUR_PALETTES = {
+      hubert:  { freezing:'#7FB3E8', cold:'#A0C4E8', warm:'#FFB74D', hot:'#FF8A50', sweating:'#F4511E', unknown:'#FFB74D', finished:'#E91E63' },
+      nabinka: { freezing:'#7A8A99', cold:'#9AA6B2', warm:'#9E9E9E', hot:'#7A7A7A', sweating:'#5A5A5A', unknown:'#9E9E9E', finished:'#E91E63' }
     };
+
     const CAT_LABELS = {
-      freezing: 'freezing ❄️', cold: 'cold', warm: 'warm',
-      hot: 'hot 🥵', sweating: 'on fire 🔥', unknown: 'locating…', finished: 'found 💕'
+      freezing: 'mrzne ❄️', cold: 'zima', warm: 'teplo',
+      hot: 'horúco 🥵', sweating: 'horííí 🔥', unknown: 'hľadám…', finished: 'nájdené 💕'
     };
 
     function catStateFor(dist) {
@@ -629,11 +854,20 @@ Here is the complete index.html with your five new stops. I've kept all the exis
       return 'sweating';
     }
 
+    function paintCat(el, palette, state) {
+      if (!el) return;
+      const fur = palette[state] || palette.warm;
+      el.querySelectorAll('.cat-fur').forEach(n => n.style.fill = fur);
+    }
+
     function updateCat(dist) {
       const state = catStateFor(dist);
-      document.documentElement.style.setProperty('--cat-fur', CAT_FUR[state]);
-      document.getElementById('catLabel').textContent = CAT_LABELS[state];
       const w = document.getElementById('catWidget');
+
+      document.querySelectorAll('.cat-hubert').forEach(el => paintCat(el, FUR_PALETTES.hubert, state));
+      document.querySelectorAll('.cat-nabinka').forEach(el => paintCat(el, FUR_PALETTES.nabinka, state));
+
+      document.getElementById('catLabel').textContent = CAT_LABELS[state];
       w.classList.toggle('show-snow', state === 'freezing' || state === 'cold');
       w.classList.toggle('show-sweat', state === 'hot' || state === 'sweating');
       w.classList.toggle('show-hearts', state === 'finished');
@@ -680,16 +914,17 @@ Here is the complete index.html with your five new stops. I've kept all the exis
       setCatFace('neutral');
 
       if (!navigator.geolocation) {
-        showGpsError('This browser does not support location. Try Safari or Chrome.');
+        showGpsError('Tento prehliadač nepodporuje polohu. Skús Safari alebo Chrome.');
         return;
       }
       if (!resume) {
         currentStopIndex = 0;
         isFinal = false;
+        riddleShown = false;
         stops.forEach(s => s.revealed = false);
         clearProgress();
       }
-      updateEmojiBar();
+      updateLetterBar();
       updateDebugStopGrid();
       updateCat(null);
 
@@ -697,7 +932,11 @@ Here is the complete index.html with your five new stops. I've kept all the exis
         enableHighAccuracy: true, maximumAge: 10000, timeout: 15000
       });
 
-      if (isFinal) { showFinalGuess(); } else { showStop(currentStopIndex); }
+      if (isFinal) {
+        showFinalGuess();
+      } else {
+        showStop(currentStopIndex);
+      }
     }
 
     function onPosition(pos) {
@@ -715,7 +954,7 @@ Here is the complete index.html with your five new stops. I've kept all the exis
 
       if (currentStopIndex < stops.length && !isFinal && !hasFittedForStop) {
         const stop = stops[currentStopIndex];
-        const bounds = L.latLngBounds([currentPosition, stop.coords]);
+        const bounds = L.latLngBounds([currentPosition, stop.searchCenter]);
         map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
         hasFittedForStop = true;
       }
@@ -725,20 +964,20 @@ Here is the complete index.html with your five new stops. I've kept all the exis
 
     function onError(err) {
       console.warn(err);
-      let message = "We need your location to start the hunt. ";
+      let message = "Potrebujeme tvoju polohu, aby sa lov mohol začať. ";
       if (err.code === 1) {
-        message = "Location access is blocked. Here's how to fix it:\n\n" +
+        message = "Prístup k polohe je zablokovaný. Tu je návod:\n\n" +
           "iPhone:\n" +
-          "• Settings → Privacy & Security → Location Services → make sure it's ON\n" +
-          "• Then find Safari (and Chrome) in the list and set to 'While Using'\n" +
-          "• Also: Settings → General → Transfer or Reset iPhone → Reset → Reset Location & Privacy\n\n" +
+          "• Nastavenia → Súkromie a bezpečnosť → Služby určovania polohy → zapni\n" +
+          "• Potom nájdi Safari (a Chrome) v zozname a nastav na 'Pri používaní'\n" +
+          "• Alebo: Nastavenia → Všeobecné → Preniesť alebo obnoviť iPhone → Obnoviť → Obnoviť polohu a súkromie\n\n" +
           "Android:\n" +
-          "• Tap the lock icon next to the URL → Permissions → Location → Allow\n\n" +
-          "Then reload the page.";
+          "• Ťukni na ikonu zámku vedľa URL → Povolenia → Poloha → Povoliť\n\n" +
+          "Potom obnov stránku.";
       } else if (err.code === 2) {
-        message = "Your location couldn't be determined. Move somewhere with a clearer view of the sky and try again.";
+        message = "Polohu sa nepodarilo zistiť. Presuň sa na miesto s lepším výhľadom na oblohu a skús znova.";
       } else if (err.code === 3) {
-        message = "Location request timed out. Move to a more open spot and try again.";
+        message = "Požiadavka na polohu vypršala. Presuň sa na otvorenejšie miesto a skús znova.";
       }
       showGpsError(message);
     }
@@ -753,13 +992,41 @@ Here is the complete index.html with your five new stops. I've kept all the exis
       const stop = stops[currentStopIndex];
       if (!currentPosition) { updateCat(null); return; }
 
-      const dist = distance(currentPosition, stop.coords);
-      document.getElementById('status').textContent = `${Math.round(dist)} m to the next clue`;
-      updateCat(dist);
+      const distTrue = distance(currentPosition, stop.coords);
+      const distCenter = distance(currentPosition, stop.searchCenter);
 
-      if (dist <= stop.radius && !stop.revealed) {
+      updateCat(distTrue);
+
+      if (circle) {
+        let r;
+        if (distCenter >= stop.outerRadius) {
+          r = stop.outerRadius;
+        } else if (distCenter <= stop.triggerRadius) {
+          r = stop.triggerRadius;
+        } else {
+          const t = (distCenter - stop.triggerRadius) / (stop.outerRadius - stop.triggerRadius);
+          r = stop.triggerRadius + (stop.outerRadius - stop.triggerRadius) * t;
+        }
+        circle.setRadius(r);
+      }
+
+      const st = document.getElementById('status');
+      if (distTrue <= stop.triggerRadius) {
+        st.textContent = 'Jeeej našla :3';
+      } else if (distTrue <= 40) {
+        st.textContent = 'Veľmi blízko — rozhliadni sa';
+      } else if (distTrue <= 100) {
+        st.textContent = 'Blízko…';
+      } else if (distCenter <= stop.outerRadius) {
+        st.textContent = 'Si v blízkosti';
+      } else {
+        st.textContent = 'Choď smerom ku kruhu';
+      }
+
+      if (distTrue <= stop.triggerRadius && !stop.revealed && !riddleShown) {
         stop.revealed = true;
-        vibrate(60);
+        riddleShown = true;
+        vibrate([60, 40, 80]);
         showRiddle(stop);
       }
     }
@@ -775,7 +1042,7 @@ Here is the complete index.html with your five new stops. I've kept all the exis
     }
 
     function closeAllModals() {
-      ['startScreen','riddleModal','challengeModal','emojiModal',
+      ['startScreen','riddleModal','challengeModal','letterModal',
        'finalGuessModal','finalModal','gpsErrorModal'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
       });
@@ -783,14 +1050,18 @@ Here is the complete index.html with your five new stops. I've kept all the exis
 
     function showStop(index) {
       hasFittedForStop = false;
+      riddleShown = false;
       const stop = stops[index];
-      if (stopMarker) map.removeLayer(stopMarker);
       if (circle) map.removeLayer(circle);
-      stopMarker = L.marker(stop.coords).addTo(map);
-      circle = L.circle(stop.coords, {
-        radius: stop.radius, color: '#e91e63', fillColor: '#e91e63', fillOpacity: 0.1
+      circle = L.circle(stop.searchCenter, {
+        radius: stop.outerRadius,
+        color: '#e91e63',
+        fillColor: '#e91e63',
+        fillOpacity: 0.08,
+        weight: 2,
+        dashArray: '6 6'
       }).addTo(map);
-      map.setView(stop.coords, 16);
+      map.setView(stop.searchCenter, 15);
       hasFittedForStop = true;
       updateDebugStopGrid();
     }
@@ -801,12 +1072,13 @@ Here is the complete index.html with your five new stops. I've kept all the exis
         return;
       }
       const stop = stops[currentStopIndex];
-      const bounds = L.latLngBounds([currentPosition || stop.coords, stop.coords]);
+      const bounds = L.latLngBounds([currentPosition || stop.searchCenter, stop.searchCenter]);
       map.fitBounds(bounds, { padding: [60, 60], maxZoom: 16 });
     }
 
     function showRiddle(stop) {
       setCatFace('neutral');
+      document.getElementById('riddleHeader').textContent = `Hádanka ${currentStopIndex + 1} z ${stops.length}`;
       document.getElementById('riddleText').textContent = stop.riddle;
       document.getElementById('answerInput').value = '';
       document.getElementById('answerError').textContent = '';
@@ -824,12 +1096,12 @@ Here is the complete index.html with your five new stops. I've kept all the exis
         animateCats('bounce');
         vibrate([50, 40, 80]);
         document.getElementById('riddleModal').classList.add('hidden');
-        setTimeout(() => showChallenge(stop), 850);
+        setTimeout(() => showChallenge(stop), 700);
       } else {
         setCatFace('sad');
         animateCats('shake');
         vibrate([60, 40, 60]);
-        document.getElementById('answerError').textContent = 'Not quite. Try again.';
+        document.getElementById('answerError').textContent = 'Skús to znova.';
         const card = document.getElementById('riddleCard');
         card.classList.remove('shake');
         void card.offsetWidth;
@@ -849,22 +1121,22 @@ Here is the complete index.html with your five new stops. I've kept all the exis
       const finishedStop = stops[currentStopIndex];
       currentStopIndex++;
       saveProgress();
-      updateEmojiBar();
-      showEmojiReveal(finishedStop);
+      updateLetterBar();
+      showLetterReveal(finishedStop);
     }
 
-    function showEmojiReveal(stop) {
-      document.getElementById('emojiBig').textContent = stop.emoji;
-      const collected = collectedEmojis();
+    function showLetterReveal(stop) {
+      document.getElementById('letterBig').textContent = stop.letter;
+      const collected = collectedPieces();
       const text = collected.length < stops.length
-        ? `You've collected ${collected.length} of ${stops.length} pieces. Keep going.`
-        : `That's all five. Time to figure out what they spell.`;
-      document.getElementById('emojiProgressText').textContent = text;
-      document.getElementById('emojiModal').classList.remove('hidden');
+        ? `Našla si ${collected.length} zo ${stops.length} stôp.`
+        : `To sú všetky stopy. Rozlúšti, čo hovoria.`;
+      document.getElementById('letterProgressText').textContent = text;
+      document.getElementById('letterModal').classList.remove('hidden');
     }
 
-    function continueAfterEmoji() {
-      document.getElementById('emojiModal').classList.add('hidden');
+    function continueAfterLetter() {
+      document.getElementById('letterModal').classList.add('hidden');
       setCatFace('neutral');
       if (currentStopIndex >= stops.length) {
         isFinal = true;
@@ -879,12 +1151,13 @@ Here is the complete index.html with your five new stops. I've kept all the exis
     function showFinalGuess() {
       if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
       document.getElementById('recenterBtn').style.display = 'none';
-      document.getElementById('status').textContent = 'Final puzzle';
-      document.getElementById('finalEmojis').textContent = stops.map(s => s.emoji).join(' ');
+      document.getElementById('status').textContent = 'Posledná hádanka';
+      document.getElementById('finalLetters').textContent = stops.map(s => s.letter).join('  ');
       document.getElementById('finalAnswerInput').value = '';
       document.getElementById('finalAnswerError').textContent = '';
       document.getElementById('finalGuessModal').classList.remove('hidden');
-      document.getElementById('emojiBar').style.display = 'none';
+      document.getElementById('letterBar').style.display = 'none';
+      if (circle) { map.removeLayer(circle); circle = null; }
       updateCat(0);
       setCatFace('happy');
       updateDebugStopGrid();
@@ -906,7 +1179,7 @@ Here is the complete index.html with your five new stops. I've kept all the exis
         animateCats('shake');
         vibrate([60, 40, 60]);
         document.getElementById('finalAnswerError').textContent =
-          'Not quite. Look at the pieces one more time.';
+          'Skús to znova. Pozri sa na stopy ešte raz.';
         autoResetFace(1800);
       }
     }
@@ -917,7 +1190,7 @@ Here is the complete index.html with your five new stops. I've kept all the exis
 
     function showHint() {
       const stop = stops[currentStopIndex];
-      if (stop && stop.hint) document.getElementById('answerError').textContent = 'Hint: ' + stop.hint;
+      if (stop && stop.hint) document.getElementById('answerError').textContent = 'Nápoveda: ' + stop.hint;
     }
 
     function updateDebugStopGrid() {
@@ -944,44 +1217,82 @@ Here is the complete index.html with your five new stops. I've kept all the exis
       closeAllModals();
       currentStopIndex = index;
       isFinal = false;
+      riddleShown = false;
       stops.forEach((s, i) => { s.revealed = (i < index); });
-      saveProgress(); updateEmojiBar();
+      saveProgress(); updateLetterBar();
       document.getElementById('recenterBtn').style.display = 'flex';
       showStop(index);
-      stops[index].revealed = true;
-      showRiddle(stops[index]);
+      clearDistButtons();
+      updateDebugStopGrid();
     }
     function debugSolveCurrent() {
       closeAllModals();
       if (isFinal || currentStopIndex >= stops.length) return;
       const finished = stops[currentStopIndex];
       currentStopIndex++;
-      saveProgress(); updateEmojiBar();
+      saveProgress(); updateLetterBar();
       setCatFace('happy');
       animateCats('bounce');
-      showEmojiReveal(finished);
-    }
-    function debugSkipRiddle() {
-      closeAllModals();
-      if (isFinal || currentStopIndex >= stops.length) return;
-      showChallenge(stops[currentStopIndex]);
+      showLetterReveal(finished);
+      clearDistButtons();
+      updateDebugStopGrid();
     }
     function debugSkip() {
       closeAllModals();
       if (isFinal || currentStopIndex >= stops.length) return;
       currentStopIndex++;
-      saveProgress(); updateEmojiBar();
+      saveProgress(); updateLetterBar();
       if (currentStopIndex >= stops.length) { isFinal = true; saveProgress(); showFinalGuess(); }
       else { showStop(currentStopIndex); }
+      clearDistButtons();
+      updateDebugStopGrid();
     }
     function debugEnd() {
       closeAllModals();
       currentStopIndex = stops.length;
       isFinal = true;
-      saveProgress(); updateEmojiBar();
+      saveProgress(); updateLetterBar();
       showFinalGuess();
+      clearDistButtons();
+      updateDebugStopGrid();
     }
     function debugReset() { clearProgress(); location.reload(); }
+
+    function clearDistButtons() {
+      document.querySelectorAll('.distBtn').forEach(b => b.classList.remove('active'));
+    }
+
+    function debugSimulateDistance(meters) {
+      closeAllModals();
+      if (isFinal || currentStopIndex >= stops.length) return;
+      const stop = stops[currentStopIndex];
+
+      const latOffset = meters / 111320;
+      const fakeLat = stop.coords[0] - latOffset;
+      const fakeLng = stop.coords[1];
+      currentPosition = [fakeLat, fakeLng];
+
+      if (userMarker) {
+        userMarker.setLatLng([fakeLat, fakeLng]);
+      } else {
+        userMarker = L.circleMarker([fakeLat, fakeLng], {
+          radius: 8, color: '#2196f3', fillColor: '#2196f3', fillOpacity: 1
+        }).addTo(map);
+      }
+
+      checkProximity();
+
+      document.querySelectorAll('.distBtn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.dist, 10) === meters);
+      });
+    }
+
+    function debugTogglePanel() {
+      const body = document.getElementById('dbgBody');
+      const btn = document.getElementById('dbgToggle');
+      body.classList.toggle('collapsed');
+      btn.textContent = body.classList.contains('collapsed') ? '+' : '–';
+    }
 
     function initDebugPanel() {
       if (!DEBUG) return;
@@ -989,10 +1300,14 @@ Here is the complete index.html with your five new stops. I've kept all the exis
       document.getElementById('dbgSolve').onclick = debugSolveCurrent;
       document.getElementById('dbgSkip').onclick = debugSkip;
       document.getElementById('dbgEnd').onclick = debugEnd;
-      document.getElementById('dbgSkipRiddle').onclick = debugSkipRiddle;
-      document.getElementById('dbgReset').onclick = debugReset;
       document.getElementById('dbgHide').onclick = () => document.getElementById('debugPanel').style.display = 'none';
-      document.getElementById('dbgShow').onclick = () => document.getElementById('debugPanel').style.display = 'block';
+      document.getElementById('dbgReset').onclick = debugReset;
+      document.getElementById('dbgToggle').onclick = debugTogglePanel;
+
+      document.querySelectorAll('.distBtn').forEach(b => {
+        b.onclick = () => debugSimulateDistance(parseInt(b.dataset.dist, 10));
+      });
+
       updateDebugStopGrid();
     }
 
@@ -1004,8 +1319,8 @@ Here is the complete index.html with your five new stops. I've kept all the exis
         currentStopIndex = saved.currentStopIndex;
         isFinal = false;
         document.getElementById('startMessage').textContent =
-          `Welcome back. You're on stop ${Math.min(currentStopIndex + 1, stops.length)} of ${stops.length}.`;
-        document.getElementById('startBtn').textContent = 'Start fresh';
+          `Vitaj späť, Simonka. Si na zastávke ${Math.min(currentStopIndex + 1, stops.length)} z ${stops.length}.`;
+        document.getElementById('startBtn').textContent = 'Začať odznova';
         document.getElementById('resumeBtn').style.display = 'block';
         document.getElementById('restartBtn').style.display = 'block';
       }
@@ -1017,13 +1332,13 @@ Here is the complete index.html with your five new stops. I've kept all the exis
         currentStopIndex = 0;
         isFinal = false;
         stops.forEach(s => s.revealed = false);
-        updateEmojiBar();
+        updateLetterBar();
         startHunt(true);
       });
       document.getElementById('submitAnswerBtn').addEventListener('click', submitAnswer);
       document.getElementById('hintBtn').addEventListener('click', showHint);
       document.getElementById('completeChallengeBtn').addEventListener('click', completeChallenge);
-      document.getElementById('continueBtn').addEventListener('click', continueAfterEmoji);
+      document.getElementById('continueBtn').addEventListener('click', continueAfterLetter);
       document.getElementById('submitFinalBtn').addEventListener('click', submitFinalGuess);
       document.getElementById('gpsRetryBtn').addEventListener('click', () => {
         document.getElementById('gpsErrorModal').classList.add('hidden');
@@ -1036,42 +1351,3 @@ Here is the complete index.html with your five new stops. I've kept all the exis
   </script>
 </body>
 </html>
-```
-
----
-
-🎯 What changed
-
-The five new stops, in walking order:
-
-# Place Address Coordinates
-1 Blue Mondays Dunajská 16 48.1445, 17.1156
-2 Funtastic Obchodná 14 48.1475, 17.1103
-3 Šmak Vegan Sushi Klariská 12 48.1444, 17.1055
-4 Knižnica na Laurinskej Laurinská 5 48.1437, 17.1108
-5 Medická záhrada — 48.1499, 17.1197
-
-Emojis are shuffled — she collects them in this order:
-👰 ⚫ 🖤 👰 👰
-
-She has to mentally rearrange to ⚫ 👰 👰 👰 🖤 → Black Veil Brides.
-
-New riddles for each stop — hints that don't give away the name directly, but she'll figure it out once she's close.
-
-New challenges — coffee photo, window shopping, menu reading, book sharing, and a bench sit at the end where you present the real treasure.
-
-Final message kept as Black Veil Brides with the love note.
-
----
-
-🧪 Testing
-
-Open ?debug=1, tap Reset, then Start. Use the 1 2 3 4 5 buttons to jump to each stop and verify the riddles. Answers for the debug walkthrough:
-
-· blue mondays
-· funtastic
-· smak
-· kniznica
-· medicka zahrada
-
-Then tap 🏁 End and type black veil brides to see the final screen.
