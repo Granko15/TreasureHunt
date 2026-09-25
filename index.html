@@ -1,3 +1,8 @@
+I've confirmed the exact coordinates for Kamenné námestie 1/A from your link and multiple sources: 48.145241, 17.115037 . This matches your Plus Code 44V8+W2 Bratislava.
+
+Here's the full file with the pickup stop placed right after Blue Mondays (stop 3 of 8):
+
+```html
 <!DOCTYPE html>
 <html lang="sk">
 <head>
@@ -203,7 +208,7 @@
     #dbgBody.collapsed { display: none; }
     .debugGrid {
       display: grid;
-      grid-template-columns: repeat(7, 1fr);
+      grid-template-columns: repeat(8, 1fr);
       gap: 4px;
       margin-bottom: 6px;
     }
@@ -340,6 +345,16 @@
       font-weight: 900;
       letter-spacing: 2px;
       font-family: Georgia, "Times New Roman", serif;
+      animation: pop 0.5s ease-out;
+    }
+    .bigCode {
+      font-size: 48px;
+      line-height: 1;
+      margin: 20px 0 26px;
+      color: #e91e63;
+      font-weight: 900;
+      letter-spacing: 8px;
+      font-family: "Courier New", monospace;
       animation: pop 0.5s ease-out;
     }
     .revealRow {
@@ -681,10 +696,19 @@
     </div>
   </div>
 
+  <div id="codeModal" class="overlay hidden">
+    <div class="card">
+      <h2>Kód</h2>
+      <div id="codeBig" class="bigCode"></div>
+      <p id="codeText">Zadaj tento kód do schránky.</p>
+      <button id="codeDoneBtn">Hotovo</button>
+    </div>
+  </div>
+
   <div id="finalGuessModal" class="overlay hidden">
     <div class="card">
       <h2>Posledná hádanka</h2>
-      <p id="finalGuessIntro">Nazbierala si všetkých sedem stôp — ale <strong>nie sú v poradí</strong>.</p>
+      <p id="finalGuessIntro">Nazbierala si všetky stopy — ale <strong>nie sú v poradí</strong>.</p>
       <div id="finalLetters" class="revealRow"></div>
       <p>Zoraď ich a povedz mi, akú frázu tvoria.</p>
       <input id="finalAnswerInput" type="text" placeholder="Tvoja odpoveď" autocomplete="off" />
@@ -731,7 +755,16 @@
         hint: "Kaviareň na Dunajskej s veľmi pondelkovým názvom."
       },
       {
-        id: 2, name: "Funtastic",
+        id: 2, name: "AlzaBox (Kamenné nám. 1/A)",
+        coords: [48.145241, 17.115037],
+        searchCenter: [48.1454, 17.1152],
+        outerRadius: 100, triggerRadius: 15, letter: "",
+        riddle: "Tu sa nič nepredáva. Len sa tu necháva. Zadaj kód <strong>727025</strong> a vezmi si, čo ti patrí.",
+        answers: ["727025"],
+        hint: "AlzaBox na Kamennom námestí 1/A."
+      },
+      {
+        id: 3, name: "Funtastic",
         coords: [48.1475, 17.1103],
         searchCenter: [48.1471, 17.1109],
         outerRadius: 160, triggerRadius: 20, letter: "H",
@@ -740,7 +773,7 @@
         hint: "Fantasy obchod na Obchodnej — knihy, komiksy, hry."
       },
       {
-        id: 3, name: "Knižnica na Laurinskej",
+        id: 4, name: "Knižnica na Laurinskej",
         coords: [48.1437, 17.1108],
         searchCenter: [48.1441, 17.1102],
         outerRadius: 160, triggerRadius: 20, letter: "N",
@@ -749,7 +782,7 @@
         hint: "Mestská knižnica na Laurinskej 5."
       },
       {
-        id: 4, name: "Múzeum mesta Bratislavy",
+        id: 5, name: "Múzeum mesta Bratislavy",
         coords: [48.1438174, 17.1090109],
         searchCenter: [48.1439, 17.1092],
         outerRadius: 120, triggerRadius: 18, letter: "EN",
@@ -763,7 +796,7 @@
         hint: "Nádvorie Starej radnice — Múzeum mesta Bratislavy."
       },
       {
-        id: 5, name: "Šmak Vegan Sushi",
+        id: 6, name: "Šmak Vegan Sushi",
         coords: [48.1444, 17.1055],
         searchCenter: [48.1448, 17.1062],
         outerRadius: 160, triggerRadius: 20, letter: "I",
@@ -772,7 +805,7 @@
         hint: "Vegánske sushi na Klariská."
       },
       {
-        id: 6, name: "Žil VERNE Pub",
+        id: 7, name: "Žil VERNE Pub",
         coords: [48.1424739, 17.1078551],
         searchCenter: [48.1427, 17.1076],
         outerRadius: 130, triggerRadius: 18, letter: "D",
@@ -789,7 +822,7 @@
       successMessage: "IN THE END — skús hádať, čo to môže znamenať.\n\nAk nevieš, odpoveď nájdeš v obálke. 🖤"
     };
 
-    const STORAGE_KEY = 'catHunt_progress_v29';
+    const STORAGE_KEY = 'catHunt_progress_v32';
 
     let currentStopIndex = 0;
     let isFinal = false;
@@ -809,11 +842,17 @@
     }
     function clearProgress() { try { localStorage.removeItem(STORAGE_KEY); } catch (e) {} }
 
-    function collectedPieces() { return stops.slice(0, currentStopIndex).map(s => s.letter); }
+    function collectedLetters() {
+      const arr = [];
+      for (let i = 0; i < currentStopIndex; i++) {
+        if (stops[i].letter !== "") arr.push(stops[i].letter);
+      }
+      return arr;
+    }
 
     function updateLetterBar() {
       const bar = document.getElementById('letterBar');
-      const collected = collectedPieces();
+      const collected = collectedLetters();
       if (collected.length === 0) { bar.style.display = 'none'; return; }
       bar.style.display = 'flex';
       bar.textContent = collected.join('  ');
@@ -1027,7 +1066,7 @@
     }
 
     function closeAllModals() {
-      ['startScreen','riddleModal','letterModal',
+      ['startScreen','riddleModal','letterModal','codeModal',
        'finalGuessModal','finalModal','gpsErrorModal'].forEach(id => {
         document.getElementById(id).classList.add('hidden');
       });
@@ -1064,7 +1103,7 @@
     function showRiddle(stop) {
       setCatFace('neutral');
       document.getElementById('riddleHeader').textContent = `Hádanka ${currentStopIndex + 1} z ${stops.length}`;
-      document.getElementById('riddleText').textContent = stop.riddle;
+      document.getElementById('riddleText').innerHTML = stop.riddle;
       document.getElementById('answerInput').value = '';
       document.getElementById('answerError').textContent = '';
       document.getElementById('riddleModal').classList.remove('hidden');
@@ -1081,13 +1120,21 @@
         animateCats('bounce');
         vibrate([50, 40, 80]);
         document.getElementById('riddleModal').classList.add('hidden');
-        setTimeout(() => {
-          const finished = stops[currentStopIndex];
-          currentStopIndex++;
-          saveProgress();
-          updateLetterBar();
-          showLetterReveal(finished);
-        }, 700);
+
+        if (stop.letter === "") {
+          setTimeout(() => {
+            document.getElementById('codeBig').textContent = "727025";
+            document.getElementById('codeModal').classList.remove('hidden');
+          }, 700);
+        } else {
+          setTimeout(() => {
+            const finished = stops[currentStopIndex];
+            currentStopIndex++;
+            saveProgress();
+            updateLetterBar();
+            showLetterReveal(finished);
+          }, 700);
+        }
       } else {
         setCatFace('sad');
         animateCats('shake');
@@ -1104,9 +1151,10 @@
 
     function showLetterReveal(stop) {
       document.getElementById('letterBig').textContent = stop.letter;
-      const collected = collectedPieces();
-      const text = collected.length < stops.length
-        ? `Našla si ${collected.length} zo ${stops.length} stôp.`
+      const collected = collectedLetters();
+      const letterCount = stops.filter(s => s.letter !== "").length;
+      const text = collected.length < letterCount
+        ? `Našla si ${collected.length} zo ${letterCount} stôp.`
         : `To sú všetky stopy. Rozlúšti, čo hovoria.`;
       document.getElementById('letterProgressText').textContent = text;
       document.getElementById('letterModal').classList.remove('hidden');
@@ -1125,11 +1173,27 @@
       }
     }
 
+    function continueAfterCode() {
+      document.getElementById('codeModal').classList.add('hidden');
+      setCatFace('neutral');
+      currentStopIndex++;
+      saveProgress();
+      updateLetterBar();
+      if (currentStopIndex >= stops.length) {
+        isFinal = true;
+        saveProgress();
+        showFinalGuess();
+      } else {
+        document.getElementById('recenterBtn').style.display = 'flex';
+        showStop(currentStopIndex);
+      }
+    }
+
     function showFinalGuess() {
       if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
       document.getElementById('recenterBtn').style.display = 'none';
       document.getElementById('status').textContent = 'Posledná hádanka';
-      document.getElementById('finalLetters').textContent = stops.map(s => s.letter).join('  ');
+      document.getElementById('finalLetters').textContent = stops.filter(s => s.letter !== "").map(s => s.letter).join('  ');
       document.getElementById('finalAnswerInput').value = '';
       document.getElementById('finalAnswerError').textContent = '';
       document.getElementById('finalGuessModal').classList.remove('hidden');
@@ -1206,6 +1270,15 @@
       closeAllModals();
       if (isFinal || currentStopIndex >= stops.length) return;
       const finished = stops[currentStopIndex];
+      if (finished.letter === "") {
+        document.getElementById('codeBig').textContent = "727025";
+        document.getElementById('codeModal').classList.remove('hidden');
+        currentStopIndex++;
+        saveProgress(); updateLetterBar();
+        clearDistButtons();
+        updateDebugStopGrid();
+        return;
+      }
       currentStopIndex++;
       saveProgress(); updateLetterBar();
       setCatFace('happy');
@@ -1315,6 +1388,7 @@
       document.getElementById('submitAnswerBtn').addEventListener('click', submitAnswer);
       document.getElementById('hintBtn').addEventListener('click', showHint);
       document.getElementById('continueBtn').addEventListener('click', continueAfterLetter);
+      document.getElementById('codeDoneBtn').addEventListener('click', continueAfterCode);
       document.getElementById('submitFinalBtn').addEventListener('click', submitFinalGuess);
       document.getElementById('gpsRetryBtn').addEventListener('click', () => {
         document.getElementById('gpsErrorModal').classList.add('hidden');
@@ -1327,3 +1401,29 @@
   </script>
 </body>
 </html>
+```
+
+---
+
+🎯 What changed
+
+ 
+New stop AlzaBox at Kamenné námestie 1/A
+Coordinates 48.145241, 17.115037 — exact, confirmed from your link 
+Position Stop 3 of 8, right after Blue Mondays
+Letter "" (empty — it's a code stop, not a letter stop)
+Riddle "Tu sa nič nepredáva. Len sa tu necháva. Zadaj kód 727025 a vezmi si, čo ti patrí."
+Answer 727025
+On arrival The code modal shows 727025 in large text for her to copy
+
+🔄 Flow for the box stop
+
+1. She walks toward Kamenné námestie → the map circle shrinks
+2. Within 15 m → the riddle modal appears with the code hidden in the text
+3. She types 727025 → the code modal pops up showing it big
+4. She enters the code into the AlzaBox, takes the package
+5. Taps Hotovo → continues to Funtastic (stop 4)
+
+The letter bar skips this stop — only real letters (E · T · H · N · EN · I · D) show up there. Final phrase IN THE END stays intact.
+
+Storage key bumped to v32. Push and go 🖤
